@@ -48,7 +48,7 @@ const main = async () => {
         );
       } catch (error) {
         console.warn(
-          `Coudln't read ${join(
+          `Couldn't read ${join(
             __dirname,
             `../../${packageName}/package.json`
           )}`
