@@ -1,0 +1,599 @@
+export const typeDefs = [
+  `
+  scalar ColorHex
+
+  input CreateIogLabelInput {
+    centerPoint: [Float!]!
+    height: Float!
+    id: ID
+    imageId: String!
+    labelClassId: ID
+    width: Float!
+    x: Float!
+    y: Float!
+  }
+
+  enum CurrentUserCanAcceptInvitation {
+    AlreadyAccepted
+    AlreadyDeclined
+    AlreadyMemberOfTheWorkspace
+    Yes
+  }
+
+  type Dataset {
+    createdAt: DateTime!
+    id: ID!
+    images(first: Int, skip: Int): [Image!]!
+    imagesAggregates: ImagesAggregates!
+    labelClasses: [LabelClass!]!
+    labelClassesAggregates: LabelClassesAggregates!
+    labels: [Label!]!
+    labelsAggregates: LabelsAggregates!
+    name: String!
+    slug: String!
+    updatedAt: DateTime!
+    workspace: Workspace!
+  }
+
+  input DatasetCreateInput {
+    id: ID
+    name: String!
+    workspaceSlug: String!
+  }
+
+  input DatasetImportInput {
+    format: ExportFormat!
+    options: ImportOptions
+    url: String!
+  }
+
+  input DatasetUpdateInput {
+    name: String!
+  }
+
+  input DatasetWhereInput {
+    workspaceSlug: String!
+  }
+
+  input DatasetWhereUniqueInput {
+    id: ID
+    slugs: WorkspaceSlugAndDatasetSlug
+  }
+
+  scalar DateTime
+
+  type Example {
+    createdAt: DateTime
+    id: ID
+    name: String
+    updatedAt: DateTime
+  }
+
+  input ExampleCreateInput {
+    id: ID
+    name: String!
+  }
+
+  enum ExampleOrderByInput {
+    id_ASC
+    id_DESC
+  }
+
+  input ExampleWhereInput {
+    id: ID
+  }
+
+  input ExampleWhereUniqueInput {
+    id: ID!
+  }
+
+  enum ExportFormat {
+    COCO
+    CSV
+    YOLO
+  }
+
+  input ExportOptions {
+    coco: ExportOptionsCoco
+    csv: ExportOptionsCsv
+    yolo: ExportOptionsYolo
+  }
+
+  input ExportOptionsCoco {
+    avoidImageNameCollisions: Boolean
+    exportImages: Boolean
+    name: String
+  }
+
+  input ExportOptionsCsv {
+    name: String
+  }
+
+  input ExportOptionsYolo {
+    avoidImageNameCollisions: Boolean
+    exportImages: Boolean
+    includePolygons: Boolean
+    name: String
+  }
+
+  input ExportWhereUniqueInput {
+    datasetId: ID!
+  }
+
+  type Geometry {
+    coordinates: JSON!
+    type: String!
+  }
+
+  input GeometryInput {
+    coordinates: JSON!
+    type: String!
+  }
+
+  input IdInInput {
+    in: [ID!]!
+  }
+
+  type Image {
+    createdAt: DateTime!
+    dataset: Dataset!
+    externalUrl: String
+    height: Int!
+    id: ID!
+    labels: [Label!]!
+    metadata: JSON
+    mimetype: String!
+    name: String!
+    path: String!
+    thumbnail20Url: String
+    thumbnail50Url: String
+    thumbnail100Url: String
+    thumbnail200Url: String
+    thumbnail500Url: String
+    updatedAt: DateTime!
+    url: String!
+    width: Int!
+  }
+
+  input ImageCreateInput {
+    createdAt: DateTime
+    datasetId: ID!
+    externalUrl: String
+    file: Upload
+    height: Int
+    id: ID
+    metadata: JSON
+    mimetype: String
+    name: String
+    noThumbnails: Boolean
+    path: String
+    thumbnail20Url: String
+    thumbnail50Url: String
+    thumbnail100Url: String
+    thumbnail200Url: String
+    thumbnail500Url: String
+    url: String
+    width: Int
+  }
+
+  input ImageCreateManyInput {
+    datasetId: ID!
+    images: [ImageCreateManySingleInput!]!
+  }
+
+  input ImageCreateManySingleInput {
+    createdAt: DateTime
+    externalUrl: String
+    file: Upload
+    height: Int
+    id: ID
+    mimetype: String
+    name: String
+    noThumbnails: Boolean
+    path: String
+    thumbnail20Url: String
+    thumbnail50Url: String
+    thumbnail100Url: String
+    thumbnail200Url: String
+    thumbnail500Url: String
+    url: String
+    width: Int
+  }
+
+  input ImageUpdateInput {
+    thumbnail20Url: String
+    thumbnail50Url: String
+    thumbnail100Url: String
+    thumbnail200Url: String
+    thumbnail500Url: String
+  }
+
+  input ImageWhereInput {
+    datasetId: ID
+    id: IdInInput
+  }
+
+  input ImageWhereUniqueInput {
+    id: ID!
+  }
+
+  type ImagesAggregates {
+    totalCount: Int!
+  }
+
+  input ImportOptions {
+    coco: ImportOptionsCoco
+  }
+
+  input ImportOptionsCoco {
+    annotationsOnly: Boolean
+  }
+
+  type ImportStatus {
+    error: String
+    warnings: [String!]
+  }
+
+  enum InvitationResult {
+    Error
+    Sent
+    UserAlreadyIn
+  }
+
+  input InviteMemberInput {
+    email: String!
+    role: MembershipRole!
+    workspaceSlug: String!
+  }
+
+  scalar JSON
+
+  type Label {
+    createdAt: DateTime!
+    geometry: Geometry!
+    height: Float!
+    id: ID!
+    imageId: ID!
+    labelClass: LabelClass
+    smartToolInput: JSON
+    type: LabelType!
+    updatedAt: DateTime!
+    width: Float!
+    x: Float!
+    y: Float!
+  }
+
+  type LabelClass {
+    color: ColorHex!
+    createdAt: DateTime!
+    dataset: Dataset!
+    id: ID!
+    index: Int!
+    labels: [Label!]!
+    labelsAggregates: LabelsAggregates!
+    name: String!
+    updatedAt: DateTime!
+  }
+
+  input LabelClassCreateInput {
+    color: ColorHex
+    datasetId: ID!
+    id: ID
+    name: String!
+  }
+
+  input LabelClassCreateManyInput {
+    datasetId: ID!
+    labelClasses: [LabelClassCreateManySingleInput!]!
+  }
+
+  input LabelClassCreateManySingleInput {
+    color: ColorHex
+    id: ID
+    name: String!
+  }
+
+  input LabelClassReorderInput {
+    index: Int!
+  }
+
+  input LabelClassUpdateInput {
+    color: ColorHex
+    name: String
+  }
+
+  input LabelClassWhereInput {
+    datasetId: ID
+    name: String
+  }
+
+  input LabelClassWhereUniqueInput {
+    id: ID!
+  }
+
+  type LabelClassesAggregates {
+    totalCount: Int!
+  }
+
+  input LabelCreateInput {
+    geometry: GeometryInput!
+    id: ID
+    imageId: ID!
+    labelClassId: ID
+    smartToolInput: JSON
+    type: LabelType
+  }
+
+  enum LabelType {
+    Box
+    Classification
+    Polygon
+  }
+
+  input LabelUpdateInput {
+    geometry: GeometryInput
+    labelClassId: ID
+    smartToolInput: JSON
+  }
+
+  input LabelWhereInput {
+    datasetId: ID
+    id: IdInInput
+    imageId: ID
+    labelClassId: ID
+  }
+
+  input LabelWhereUniqueInput {
+    id: ID!
+  }
+
+  type LabelsAggregates {
+    totalCount: Int!
+  }
+
+  type Membership {
+    createdAt: DateTime!
+    currentUserCanAcceptInvitation: CurrentUserCanAcceptInvitation!
+    declinedAt: DateTime
+    id: ID!
+    invitationEmailSentTo: String
+    role: MembershipRole!
+    status: MembershipStatus!
+    updatedAt: DateTime!
+    user: User
+    workspace: Workspace!
+  }
+
+  input MembershipCreateInput {
+    id: ID
+    role: MembershipRole!
+    userId: ID
+    workspaceSlug: String!
+  }
+
+  enum MembershipRole {
+    Admin
+    Member
+    Owner
+  }
+
+  enum MembershipStatus {
+    Active
+    Declined
+    Sent
+  }
+
+  input MembershipUpdateInput {
+    role: MembershipRole
+  }
+
+  input MembershipWhereInput {
+    workspaceSlug: String
+  }
+
+  input MembershipWhereUniqueInput {
+    id: ID!
+  }
+
+  type Mutation {
+    acceptInvitation(where: MembershipWhereUniqueInput!): Membership
+    createDataset(data: DatasetCreateInput!): Dataset
+    createExample(data: ExampleCreateInput!): Example
+    createImage(data: ImageCreateInput!): Image
+    createIogLabel(data: CreateIogLabelInput!): Label
+    createLabel(data: LabelCreateInput!): Label
+    createLabelClass(data: LabelClassCreateInput!): LabelClass
+    createManyImages(data: ImageCreateManyInput!): [Image!]!
+    createManyLabelClasses(data: LabelClassCreateManyInput!): [LabelClass!]!
+    createMembership(data: MembershipCreateInput!): Membership
+    createWorkspace(data: WorkspaceCreateInput!, options: WorkspaceCreateOptions): Workspace
+    declineInvitation(where: MembershipWhereUniqueInput!): Membership
+    deleteDataset(where: DatasetWhereUniqueInput!): Dataset
+    deleteImage(where: ImageWhereUniqueInput!): Image
+    deleteLabel(where: LabelWhereUniqueInput!): Label
+    deleteLabelClass(where: LabelClassWhereUniqueInput!): LabelClass
+    deleteManyImages(where: ImageWhereInput!): Int!
+    deleteManyLabels(where: LabelWhereInput!): [Label!]!
+    deleteMembership(where: MembershipWhereUniqueInput!): Membership
+    deleteWorkspace(where: WorkspaceWhereUniqueInput!): Workspace
+    getUploadTarget(data: UploadTargetInput!): UploadTarget!
+    importDataset(data: DatasetImportInput!, where: DatasetWhereUniqueInput!): ImportStatus
+    inviteMember(where: InviteMemberInput!): InvitationResult
+    reorderLabelClass(data: LabelClassReorderInput!, where: LabelClassWhereUniqueInput!): LabelClass
+    runAiAssistant(data: RunAiAssistantInput!): RunAiAssistantOutput!
+    updateDataset(data: DatasetUpdateInput!, where: DatasetWhereUniqueInput!): Dataset
+    updateImage(data: ImageUpdateInput!, where: ImageWhereUniqueInput!): Image
+    updateIogLabel(data: UpdateIogInput!): Label
+    updateLabel(data: LabelUpdateInput!, where: LabelWhereUniqueInput!): Label
+    updateLabelClass(data: LabelClassUpdateInput!, where: LabelClassWhereUniqueInput!): LabelClass
+    updateMembership(data: MembershipUpdateInput!, where: MembershipWhereUniqueInput!): Membership
+    updateUser(data: UserUpdateInput!, where: UserWhereUniqueInput!): User
+    updateWorkspace(data: WorkspaceUpdateInput!, where: WorkspaceWhereUniqueInput!): Workspace
+  }
+
+  type Query {
+    dataset(where: DatasetWhereUniqueInput!): Dataset!
+    datasets(first: Int, skip: Int, where: DatasetWhereInput): [Dataset!]!
+    debug: JSON!
+    example(where: ExampleWhereUniqueInput!): Example!
+    examples(first: Int, orderBy: ExampleOrderByInput, skip: Int, where: ExampleWhereInput): [Example!]!
+    exportDataset(format: ExportFormat!, options: ExportOptions, where: ExportWhereUniqueInput!): String!
+    hello: String
+    image(where: ImageWhereUniqueInput!): Image!
+    images(first: Int, skip: Int, where: ImageWhereInput): [Image!]!
+    imagesAggregates: ImagesAggregates!
+    label(where: LabelWhereUniqueInput!): Label!
+    labelClass(where: LabelClassWhereUniqueInput!): LabelClass!
+    labelClassExists(where: LabelClassWhereInput!): Boolean!
+    labelClasses(first: Int, skip: Int, where: LabelClassWhereInput): [LabelClass!]!
+    labelClassesAggregates: LabelClassesAggregates!
+    labels(first: Int, skip: Int, where: LabelWhereInput): [Label!]!
+    labelsAggregates: LabelsAggregates!
+    membership(where: MembershipWhereUniqueInput!): Membership!
+    memberships(first: Int, skip: Int, where: MembershipWhereInput): [Membership!]!
+    searchDataset(where: DatasetWhereUniqueInput!): Dataset
+    user(where: UserWhereUniqueInput!): User!
+    users(first: Int, skip: Int): [User!]!
+    workspace(where: WorkspaceWhereUniqueInput!): Workspace!
+    workspaceExists(where: WorkspaceWhereUniqueInput!): Boolean!
+    workspaces(first: Int, skip: Int, where: WorkspaceWhereInput): [Workspace!]!
+  }
+
+  input RunAiAssistantInput {
+    aiAssistantId: ID!
+    imageId: ID!
+    useAutoPolygon: Boolean
+  }
+
+  type RunAiAssistantOutput {
+    labelClasses: [ID!]!
+    labels: [Label!]!
+  }
+
+  input RunIogInput {
+    centerPoint: [Float!]
+    height: Float
+    id: ID!
+    imageUrl: String
+    pointsInside: [[Float!]]
+    pointsOutside: [[Float!]]
+    width: Float
+    x: Float
+    y: Float
+  }
+
+  input UpdateIogInput {
+    centerPoint: [Float!]
+    height: Float
+    id: ID!
+    pointsInside: [[Float!]]
+    pointsOutside: [[Float!]]
+    width: Float
+    x: Float
+    y: Float
+  }
+
+  scalar Upload
+
+  union UploadTarget = UploadTargetDirect | UploadTargetHttp
+
+  type UploadTargetDirect {
+    direct: Boolean!
+  }
+
+  type UploadTargetHttp {
+    downloadUrl: String!
+    uploadUrl: String!
+  }
+
+  input UploadTargetInput {
+    key: String!
+  }
+
+  type User {
+    createdAt: DateTime!
+    email: String
+    id: ID!
+    image: String
+    memberships: [Membership!]!
+    name: String
+    updatedAt: DateTime!
+  }
+
+  input UserUpdateInput {
+    image: String
+    name: String
+  }
+
+  input UserWhereUniqueInput {
+    id: ID!
+  }
+
+  type Workspace {
+    createdAt: DateTime!
+    datasets: [Dataset!]!
+    id: ID!
+    image: String
+    imagesAggregates: ImagesAggregates!
+    memberships: [Membership!]!
+    name: String!
+    plan: WorkspacePlan!
+    slug: String!
+    status: WorkspaceStatus!
+    stripeCustomerPortalUrl: String
+    type: WorkspaceType!
+    updatedAt: DateTime!
+  }
+
+  input WorkspaceCreateInput {
+    id: ID
+    image: String
+    name: String!
+    plan: WorkspacePlan
+  }
+
+  input WorkspaceCreateOptions {
+    createTutorial: Boolean
+  }
+
+  enum WorkspacePlan {
+    Community
+    Pro
+    Starter
+  }
+
+  input WorkspaceSlugAndDatasetSlug {
+    slug: String!
+    workspaceSlug: String!
+  }
+
+  enum WorkspaceStatus {
+    Active
+    Canceled
+    Incomplete
+    IncompleteExpired
+    PastDue
+    Trialing
+    Unpaid
+  }
+
+  enum WorkspaceType {
+    Local
+    Online
+  }
+
+  input WorkspaceUpdateInput {
+    image: String
+    name: String
+  }
+
+  input WorkspaceWhereInput {
+    slug: String
+  }
+
+  input WorkspaceWhereUniqueInput {
+    id: ID
+    slug: String
+  }
+`,
+];

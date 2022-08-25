@@ -1,66 +1,43 @@
-import { Box, useColorModeValue as mode } from "@chakra-ui/react";
+import { Box } from "@chakra-ui/react";
 import * as React from "react";
-
-import { NavContent } from "../components/website/Navbar/NavContent";
-import { Why } from "../components/website/Why/Why";
-import { Hero } from "../components/website/Hero/Hero";
-import { Features } from "../components/website/Features/Features";
-import { LogoGrid } from "../components/website/Logos/LogoGrid";
-import { Footer } from "../components/website/Footer/Footer";
-import { Pricing } from "../components/website/Pricing/Pricing";
-import { ArticlesList } from "../components/website/Blog/articles-list";
-import { getAllArticles, Article } from "../connectors/strapi";
-import { Roadmap } from "../components/website/roadmap/roadmap";
+import { CookieBanner } from "../components/cookie-banner";
 import { Meta } from "../components/meta";
 import { Banner } from "../components/website/banner";
+import { ArticlesList } from "../components/website/Blog/articles-list";
+import { Features } from "../components/website/Features/Features";
+import { Footer } from "../components/website/Footer/Footer";
+import { Hero } from "../components/website/hero";
+import { LogoGrid } from "../components/website/Logos/LogoGrid";
+import { NavBar } from "../components/website/Navbar/NavBar";
+import { Pricing } from "../components/website/pricing";
 import { Proof } from "../components/website/proof";
+import { IntroVideo } from "../components/website/intro-video";
+import { Roadmap } from "../components/website/roadmap/roadmap";
+import { Why } from "../components/website/Why/Why";
+import { APP_TITLE } from "../constants";
+import { getHomeStaticProps, HomeProps } from "../utils/get-home-static-props";
 
-export default function Website({
-  previewArticles,
-}: {
-  previewArticles: Omit<Article, "content">[];
-}) {
+export default function Website({ previewArticles }: HomeProps) {
   return (
-    <Box minH="640px">
-      <Meta />
-
-      <Box
-        as="header"
-        bg={mode("white", "gray.800")}
-        position="relative"
-        zIndex="10"
-      >
-        <Box
-          as="nav"
-          aria-label="Main navigation"
-          maxW="7xl"
-          mx="auto"
-          px={{ base: "6", md: "8" }}
-        >
-          <NavContent.Mobile display={{ base: "flex", lg: "none" }} />
-          <NavContent.Desktop display={{ base: "none", lg: "flex" }} />
-        </Box>
+    <>
+      <Meta title={APP_TITLE} />
+      <CookieBanner />
+      <Box minH="640px">
+        <NavBar />
+        <Hero />
+        <Banner />
+        <IntroVideo />
+        <Features />
+        <Proof />
+        <Why />
+        <LogoGrid />
+        <Roadmap />
+        <Pricing />
+        <ArticlesList preview previewArticles={previewArticles} />
+        <Footer />
       </Box>
-      <Hero />
-      <Banner />
-      <Features />
-      <Proof />
-      <Why />
-      <LogoGrid />
-      <Roadmap />
-      {/* <Testimonials /> */}
-      <Pricing />
-      <ArticlesList preview previewArticles={previewArticles} />
-      <Footer />
-    </Box>
+    </>
   );
 }
 
-export async function getStaticProps(): Promise<{
-  props: { previewArticles: Omit<Article, "content">[] };
-}> {
-  const previewArticles = (await getAllArticles({ limit: 3 })) || [];
-  return {
-    props: { previewArticles },
-  };
-}
+export const getStaticProps = getHomeStaticProps;

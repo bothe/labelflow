@@ -1,7 +1,18 @@
 input LabelClassCreateInput {
   id: ID
   name: String!
-  color: ColorHex!
+  color: ColorHex
+  datasetId: ID!
+}
+
+input LabelClassCreateManySingleInput {
+  id: ID
+  name: String!
+  color: ColorHex
+}
+
+input LabelClassCreateManyInput {
+  labelClasses: [LabelClassCreateManySingleInput!]!
   datasetId: ID!
 }
 
@@ -16,6 +27,7 @@ input LabelClassReorderInput {
 
 input LabelClassWhereInput {
   datasetId: ID
+  name: String
 }
 
 input LabelClassWhereUniqueInput {

@@ -4,9 +4,12 @@ import {
   Heading,
   LightMode,
   Text,
+  Center,
   useTheme,
 } from "@chakra-ui/react";
 import * as React from "react";
+
+const DISCOVER_WHATS_NEW = "Register Now";
 
 export const Banner = () => {
   const theme = useTheme();
@@ -31,37 +34,49 @@ export const Banner = () => {
           <Heading
             as="h2"
             size="3xl"
+            py="6"
             fontWeight="extrabold"
             letterSpacing="tight"
-            color="gray.800"
+            color="gray.600"
           >
-            Webinar - Get an AI model ready in no time
+            Webinar
+            <br />
           </Heading>
 
           <Text mt="4" fontSize="lg" color="gray.800">
-            From image labelling to automatic inference, discover how to build a
-            proof of concept model for your custom use case in no time. We will
-            go through a real life use case: equipment inventory on the
-            distribution electrical system.
+            <b>
+              How to Succeed an Image Labeling Project to Bring your ML Models
+              at Scale
+            </b>
+            <br />
+            High volume and quality datasets are some key success factors of a
+            machine learning project. In this 30 min webinar, we will share with
+            you the best practices to properly run an image labeling project
+            (work organisation, type of labels, format, etc.). That will be also
+            the opportunity to exchange with you around the future of LabelFlow
+            open platform.
             <br />
             <br />
-            <b> Sept 28th - 4.30pm CET Time - Duration: 45min</b>
+            <b>March 24th, 2022 at 4pm CET</b>
           </Text>
 
-          <LightMode>
-            <Button
-              mt="8"
-              as="a"
-              href="https://app.livestorm.co/labelflow/get-an-ai-model-ready-in-no-time
-            "
-              target="blank"
-              size="lg"
-              colorScheme="brand"
-              fontWeight="bold"
-            >
-              Register now
-            </Button>
-          </LightMode>
+          <Center>
+            <Box>
+              <LightMode>
+                <Button
+                  mt="8"
+                  as="a"
+                  href="https://app.livestorm.co/labelflow/how-to-succeed-an-image-labeling-project-to-bring-your-ml-models-at-scale?type=detailed"
+                  target="blank"
+                  size="lg"
+                  colorScheme="brand"
+                  fontWeight="bold"
+                >
+                  {DISCOVER_WHATS_NEW}
+                </Button>
+              </LightMode>
+            </Box>
+          </Center>
         </Box>
       </Box>
     </Box>

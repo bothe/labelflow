@@ -1,43 +1,27 @@
-import { gql, ApolloClient } from "@apollo/client";
+import { ApolloClient } from "@apollo/client";
 
-import { LabelClass } from "@labelflow/graphql-types";
-import { useLabellingStore } from "../../labelling-state";
-import {
-  getNextClassColor,
-  hexColorSequence,
-} from "../../../utils/class-color-generator";
+import { v4 as uuid } from "uuid";
+import { useLabelingStore } from "../../labeling-state";
+
 import { Effect } from "..";
-import { getDatasetsQuery } from "../../../pages/local/datasets";
-import { datasetLabelClassesQuery } from "../../../components/dataset-class-list/class-item";
 
-const createLabelClassQuery = gql`
-  mutation createLabelClass($data: LabelClassCreateInput!) {
-    createLabelClass(data: $data) {
-      id
-    }
-  }
-`;
-
-const deleteLabelClassQuery = gql`
-  mutation deleteLabelClass($where: LabelClassWhereUniqueInput!) {
-    deleteLabelClass(where: $where) {
-      id
-    }
-  }
-`;
+import { createLabelClassMutationUpdate } from "./cache-updates/create-label-class-mutation-update";
+import { deleteLabelClassMutationUpdate } from "./cache-updates/delete-label-class-mutation-update";
+import {
+  CREATE_LABEL_CLASS_QUERY,
+  DELETE_LABEL_CLASS_MUTATION,
+} from "./shared-queries";
 
 export const createCreateLabelClassEffect = (
   {
     name,
     color,
     datasetId,
-    datasetSlug,
     selectedLabelClassIdPrevious,
   }: {
     name: string;
     color: string;
     datasetId: string;
-    datasetSlug: string;
     selectedLabelClassIdPrevious: string | null;
   },
   {
@@ -46,90 +30,40 @@ export const createCreateLabelClassEffect = (
     client: ApolloClient<object>;
   }
 ): Effect => ({
-  do: async () => {
-    const {
-      data: {
-        createLabelClass: { id: labelClassId },
+  do: async (labelClassId: string = uuid()) => {
+    await client.mutate({
+      mutation: CREATE_LABEL_CLASS_QUERY,
+      variables: { data: { name, color, datasetId, id: labelClassId } },
+      update: createLabelClassMutationUpdate(datasetId),
+      optimisticResponse: {
+        createLabelClass: {
+          id: labelClassId,
+          name,
+          color,
+          __typename: "LabelClass",
+        },
       },
-    } = await client.mutate({
-      mutation: createLabelClassQuery,
-      variables: { data: { name, color, datasetId } },
-      refetchQueries: [
-        "getLabelClassesOfDataset",
-        { query: getDatasetsQuery },
-        { query: datasetLabelClassesQuery, variables: { slug: datasetSlug } },
-      ],
     });
 
-    useLabellingStore.setState({ selectedLabelClassId: labelClassId });
-
+    useLabelingStore.setState({ selectedLabelClassId: labelClassId });
     return labelClassId;
   },
   undo: async (labelClassId: string) => {
     await client.mutate({
-      mutation: deleteLabelClassQuery,
+      mutation: DELETE_LABEL_CLASS_MUTATION,
       variables: {
         where: { id: labelClassId },
       },
-      refetchQueries: [
-        "getLabelClassesOfDataset",
-        { query: getDatasetsQuery },
-        { query: datasetLabelClassesQuery, variables: { slug: datasetSlug } },
-      ],
+      update: deleteLabelClassMutationUpdate(datasetId),
+      optimisticResponse: {
+        deleteLabelClass: { __typename: "LabelClass", id: labelClassId },
+      },
     });
 
-    useLabellingStore.setState({
+    useLabelingStore.setState({
       selectedLabelClassId: selectedLabelClassIdPrevious,
     });
 
     return labelClassId;
   },
-  redo: async (labelClassId: string) => {
-    await client.mutate({
-      mutation: createLabelClassQuery,
-      variables: { data: { name, color, id: labelClassId, datasetId } },
-      refetchQueries: [
-        "getLabelClassesOfDataset",
-        { query: getDatasetsQuery },
-        { query: datasetLabelClassesQuery, variables: { slug: datasetSlug } },
-      ],
-    });
-
-    useLabellingStore.setState({ selectedLabelClassId: labelClassId });
-
-    return labelClassId;
-  },
 });
-
-export const createNewLabelClassCurry =
-  ({
-    labelClasses,
-    datasetId,
-    datasetSlug,
-    perform,
-    client,
-  }: {
-    labelClasses: LabelClass[];
-    datasetId: string;
-    datasetSlug: string;
-    perform: any;
-    client: ApolloClient<object>;
-  }) =>
-  async (name: string, selectedLabelClassIdPrevious: string | null) => {
-    const newClassColor =
-      labelClasses.length < 1
-        ? hexColorSequence[0]
-        : getNextClassColor(labelClasses[labelClasses.length - 1].color);
-    perform(
-      createCreateLabelClassEffect(
-        {
-          name,
-          color: newClassColor,
-          selectedLabelClassIdPrevious,
-          datasetId,
-          datasetSlug,
-        },
-        { client }
-      )
-    );
-  };

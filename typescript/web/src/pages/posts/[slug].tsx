@@ -1,5 +1,5 @@
 import ReactMarkdown from "react-markdown";
-import { chakra, Box, useColorModeValue as mode } from "@chakra-ui/react";
+import { chakra, Box, useColorModeValue } from "@chakra-ui/react";
 import * as React from "react";
 import rehypeRaw from "rehype-raw";
 import gfm from "remark-gfm";
@@ -8,12 +8,14 @@ import {
   getAllArticlesWithSlug,
   getArticle,
 } from "../../connectors/strapi";
-import { NavContent } from "../../components/website/Navbar/NavContent";
+import { NavBar } from "../../components/website/Navbar/NavBar";
 import { Footer } from "../../components/website/Footer/Footer";
 import { Meta } from "../../components/meta";
 import { ArticlesList } from "../../components/website/Blog/articles-list";
 import { PostTitle } from "../../components/website/Blog/PostTitle";
 import "github-markdown-css";
+import { CookieBanner } from "../../components/cookie-banner";
+import { WEB_APP_URL_ORIGIN } from "../../constants";
 
 const ChakraReactMarkdown = chakra(ReactMarkdown);
 
@@ -25,35 +27,36 @@ export default function Posts({
   moreArticles: Omit<Article, "content">[];
 }) {
   return (
-    <Box minH="640px">
-      <Meta />
-
-      <Box
-        as="header"
-        bg={mode("white", "gray.800")}
-        position="relative"
-        zIndex="10"
-      >
-        <Box
-          as="nav"
-          aria-label="Main navigation"
-          maxW="7xl"
-          mx="auto"
-          px={{ base: "6", md: "8" }}
-        >
-          <NavContent.Mobile display={{ base: "flex", lg: "none" }} />
-          <NavContent.Desktop display={{ base: "none", lg: "flex" }} />
-        </Box>
+    <>
+      <Meta
+        title={`LabelFlow | ${article?.title}`}
+        desc={article?.description}
+        images={
+          article?.image?.url !== null
+            ? [
+                {
+                  url: article?.image?.url,
+                  alt: "LabelFlow",
+                },
+              ]
+            : undefined
+        }
+        canonical={`${WEB_APP_URL_ORIGIN}/posts/${article?.slug}`}
+        article={{
+          authors: article?.author?.name ? [article?.author?.name] : [],
+          publishedTime: article?.published_at,
+          section: article?.category?.name,
+        }}
+      />
+      <CookieBanner />
+      <Box minH="640px">
+        <NavBar />
         <PostTitle
           image={article?.image}
           title={article?.title}
           description={article?.description}
         />
-        <Box
-          as="section"
-          //   bg={mode("gray.50", "gray.800")}
-          py={{ base: "10", sm: "24" }}
-        >
+        <Box as="section" py={{ base: "10", sm: "24" }}>
           <Box
             maxW={{ base: "xl", md: "3xl" }}
             mx="auto"
@@ -71,7 +74,7 @@ export default function Posts({
                   color: "brand.600",
                   ":hover": { textDecoration: "underline" },
                 },
-                color: mode("gray.800", "gray.200"),
+                color: useColorModeValue("gray.800", "gray.200"),
                 // Youtube player enhancements
                 // For parameters
                 // See https://developers.google.com/youtube/player_parameters
@@ -94,9 +97,10 @@ export default function Posts({
           </Box>
         </Box>
         <ArticlesList previewArticles={moreArticles} preview />
+
+        <Footer />
       </Box>
-      <Footer />
-    </Box>
+    </>
   );
 }
 

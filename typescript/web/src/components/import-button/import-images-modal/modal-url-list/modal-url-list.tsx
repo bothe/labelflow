@@ -1,44 +1,23 @@
-import { useState, useEffect } from "react";
-import { isEmpty } from "lodash/fp";
+import { useApolloClient, useQuery } from "@apollo/client";
 import {
-  Heading,
-  ModalHeader,
-  ModalBody,
   Button,
+  Heading,
+  ModalBody,
+  ModalHeader,
   Text,
 } from "@chakra-ui/react";
-import { useApolloClient, useQuery, gql } from "@apollo/client";
-import { useRouter } from "next/router";
-
+import { isEmpty } from "lodash/fp";
+import { useCallback, useEffect, useState } from "react";
+import {
+  GetDatasetBySlugQuery,
+  GetDatasetBySlugQueryVariables,
+} from "../../../../graphql-types/GetDatasetBySlugQuery";
+import { GET_DATASET_BY_SLUG_QUERY } from "../../../datasets/datasets.query";
+import { useDataset, useWorkspace } from "../../../../hooks";
+import { DroppedUrl, UploadInfoRecord } from "../types";
+import { importUrls } from "./import-urls";
 import { UrlList } from "./url-list";
 import { UrlStatuses } from "./url-statuses";
-import { DroppedUrl, UploadStatuses } from "../types";
-
-const createImageFromUrlMutation = gql`
-  mutation createImageMutation(
-    $externalUrl: String!
-    $createdAt: DateTime
-    $datasetId: ID!
-  ) {
-    createImage(
-      data: {
-        externalUrl: $externalUrl
-        createdAt: $createdAt
-        datasetId: $datasetId
-      }
-    ) {
-      id
-    }
-  }
-`;
-
-const getDataset = gql`
-  query getDataset($slug: String!) {
-    dataset(where: { slug: $slug }) {
-      id
-    }
-  }
-`;
 
 export const ImportImagesModalUrlList = ({
   setMode = () => {},
@@ -51,8 +30,8 @@ export const ImportImagesModalUrlList = ({
 }) => {
   const apolloClient = useApolloClient();
 
-  const router = useRouter();
-  const { datasetSlug } = router?.query;
+  const { slug: workspaceSlug } = useWorkspace();
+  const { slug: datasetSlug } = useDataset();
 
   /*
    * We need a state with the accepted and reject urls to be able to reset the list
@@ -60,58 +39,39 @@ export const ImportImagesModalUrlList = ({
    * internal state
    */
   const [urls, setUrls] = useState<Array<DroppedUrl>>([]);
-  const [uploadStatuses, setUploadStatuses] = useState<UploadStatuses>({});
+  const [uploadInfo, setUploadInfo] = useState<UploadInfoRecord>({});
 
-  const { data: datasetResult } = useQuery(getDataset, {
-    variables: { slug: datasetSlug },
-    skip: typeof datasetSlug !== "string",
+  const { data: datasetResult } = useQuery<
+    GetDatasetBySlugQuery,
+    GetDatasetBySlugQueryVariables
+  >(GET_DATASET_BY_SLUG_QUERY, {
+    variables: { workspaceSlug, slug: datasetSlug },
+    skip: isEmpty(workspaceSlug) || isEmpty(datasetSlug),
   });
 
   const datasetId = datasetResult?.dataset.id;
+
+  const handleImport = useCallback(
+    async (urlsToImport: DroppedUrl[]) => {
+      onUploadStart();
+
+      await importUrls({
+        urls: urlsToImport,
+        apolloClient,
+        datasetId,
+        setUploadInfo,
+      });
+
+      onUploadEnd();
+    },
+    [apolloClient, datasetId, setUploadInfo, onUploadStart, onUploadEnd]
+  );
 
   useEffect(() => {
     if (isEmpty(urls)) return;
     if (!datasetId) return;
 
-    const createImages = async () => {
-      const now = new Date();
-      await Promise.all(
-        urls
-          .filter((url) => isEmpty(url.errors))
-          .map(async (acceptedUrl, index) => {
-            try {
-              const createdAt = new Date();
-              createdAt.setTime(now.getTime() + index);
-              await apolloClient.mutate({
-                mutation: createImageFromUrlMutation,
-                variables: {
-                  externalUrl: acceptedUrl.url,
-                  createdAt: createdAt.toISOString(),
-                  datasetId,
-                },
-              });
-
-              setUploadStatuses((previousUploadStatuses) => {
-                return {
-                  ...previousUploadStatuses,
-                  [acceptedUrl.url]: true,
-                };
-              });
-            } catch (err) {
-              setUploadStatuses((previousUploadStatuses) => {
-                return {
-                  ...previousUploadStatuses,
-                  [acceptedUrl.url]: err.message,
-                };
-              });
-            }
-          })
-      );
-      onUploadEnd();
-    };
-
-    onUploadStart();
-    createImages();
+    handleImport(urls);
   }, [urls, datasetId]);
 
   return (
@@ -121,13 +81,15 @@ export const ImportImagesModalUrlList = ({
           Import
         </Heading>
         <Text fontSize="lg" fontWeight="medium">
-          Import images by listing file URLs, one per line. Stay in control of
-          your data. Images are not uploaded on LabelFlow servers.
+          Import images by listing file URLs, one per line.
           <Button
             colorScheme="brand"
+            display="inline"
             variant="link"
             fontSize="lg"
             fontWeight="medium"
+            whiteSpace="normal"
+            wordWrap="break-word"
             onClick={() => setMode("dropzone", "replaceIn")}
           >
             Import by dropping your files instead
@@ -146,7 +108,7 @@ export const ImportImagesModalUrlList = ({
         {isEmpty(urls) ? (
           <UrlList onDropEnd={setUrls} />
         ) : (
-          <UrlStatuses urls={urls} uploadStatuses={uploadStatuses} />
+          <UrlStatuses urls={urls} uploadInfo={uploadInfo} />
         )}
       </ModalBody>
     </>

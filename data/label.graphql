@@ -4,9 +4,11 @@ input LabelCreateInput {
   imageId: ID!
   labelClassId: ID
   geometry: GeometryInput!
+  smartToolInput: JSON
 }
 
 input LabelWhereInput {
+  id: IdInInput
   imageId: ID
   labelClassId: ID
   datasetId: ID
@@ -19,6 +21,7 @@ input LabelWhereUniqueInput {
 input LabelUpdateInput {
   labelClassId: ID
   geometry: GeometryInput
+  smartToolInput: JSON
 }
 
 input GeometryInput {

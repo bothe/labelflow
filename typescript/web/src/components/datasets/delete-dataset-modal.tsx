@@ -1,25 +1,18 @@
-import { gql, useQuery, useMutation } from "@apollo/client";
-import { useRef } from "react";
+import { gql, useMutation, useQuery } from "@apollo/client";
+import { isEmpty } from "lodash/fp";
 import {
-  AlertDialog,
-  AlertDialogBody,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogOverlay,
-  Button,
-} from "@chakra-ui/react";
+  GetDatasetByIdQuery,
+  GetDatasetByIdQueryVariables,
+} from "../../graphql-types/GetDatasetByIdQuery";
+import { WORKSPACE_DATASETS_PAGE_DATASETS_QUERY } from "../../shared-queries/workspace-datasets-page.query";
+import { DeleteModal } from "../core";
+import {
+  GET_DATASET_BY_ID_QUERY,
+  useFlushPaginatedDatasetsCache,
+} from "./datasets.query";
 
-const getDatasetByIdQuery = gql`
-  query getDatasetById($id: ID) {
-    dataset(where: { id: $id }) {
-      name
-    }
-  }
-`;
-
-const deleteDatasetByIdMutation = gql`
-  mutation deleteDatasetById($id: ID!) {
+export const DELETE_DATASET_BY_ID_MUTATION = gql`
+  mutation DeleteDatasetByIdMutation($id: ID!) {
     deleteDataset(where: { id: $id }) {
       id
     }
@@ -30,63 +23,50 @@ export const DeleteDatasetModal = ({
   isOpen = false,
   onClose = () => {},
   datasetId = undefined,
+  workspaceSlug,
 }: {
   isOpen?: boolean;
   onClose?: () => void;
   datasetId?: string;
+  workspaceSlug?: string;
 }) => {
-  const cancelRef = useRef<HTMLButtonElement>(null);
-  const { data } = useQuery(getDatasetByIdQuery, {
-    variables: { id: datasetId },
-  });
+  const flushPaginatedDatasets = useFlushPaginatedDatasetsCache(
+    workspaceSlug as string
+  );
+  const { data } = useQuery<GetDatasetByIdQuery, GetDatasetByIdQueryVariables>(
+    GET_DATASET_BY_ID_QUERY,
+    {
+      variables: { id: datasetId ?? "" },
+      skip: isEmpty(datasetId),
+    }
+  );
 
-  const [deleteDatasetMutate] = useMutation(deleteDatasetByIdMutation, {
-    variables: { id: datasetId },
-    refetchQueries: ["getDatasets"],
-  });
+  const [deleteDatasetMutate, { loading }] = useMutation(
+    DELETE_DATASET_BY_ID_MUTATION,
+    {
+      variables: { id: datasetId },
+      refetchQueries: [WORKSPACE_DATASETS_PAGE_DATASETS_QUERY],
+      update: (cache) => {
+        // Avoid issue https://github.com/labelflow/labelflow/issues/563
+        cache.evict({ id: `Dataset:${datasetId}` });
+      },
+    }
+  );
 
   const deleteDataset = async () => {
+    await flushPaginatedDatasets();
     await deleteDatasetMutate();
     onClose();
   };
 
   return (
-    <AlertDialog
+    <DeleteModal
       isOpen={isOpen}
-      leastDestructiveRef={cancelRef}
       onClose={onClose}
-      isCentered
-    >
-      <AlertDialogOverlay>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            Delete Dataset {data?.dataset?.name}
-          </AlertDialogHeader>
-
-          <AlertDialogBody>
-            Are you sure? Images, Labels and Classes will be deleted. This
-            action cannot be undone.
-          </AlertDialogBody>
-
-          <AlertDialogFooter>
-            <Button
-              ref={cancelRef}
-              onClick={onClose}
-              aria-label="Cancel delete"
-            >
-              Cancel
-            </Button>
-            <Button
-              colorScheme="red"
-              onClick={deleteDataset}
-              aria-label="Dataset delete"
-              ml={3}
-            >
-              Delete
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialogOverlay>
-    </AlertDialog>
+      header={`Delete Dataset ${data?.dataset?.name}`}
+      body="Are you sure? Images, Labels and Classes will be deleted. This action cannot be undone."
+      deleting={loading}
+      onDelete={deleteDataset}
+    />
   );
 };

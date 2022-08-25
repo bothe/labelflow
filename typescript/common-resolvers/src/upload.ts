@@ -1,9 +1,10 @@
-import type { UploadTarget } from "@labelflow/graphql-types";
+import type {
+  UploadTarget,
+  MutationGetUploadTargetArgs,
+} from "@labelflow/graphql-types";
 
 import { Context } from "./types";
-
-export const uploadsCacheName = "uploads";
-export const uploadsRoute = "/api/worker/uploads";
+import { getOrigin } from "./utils/get-origin";
 
 /**
  * A way for the server to tell how it wants to accept file uploads
@@ -11,10 +12,11 @@ export const uploadsRoute = "/api/worker/uploads";
  */
 const getUploadTarget = async (
   _parent: any,
-  _args: null,
-  { repository }: Context
+  args: MutationGetUploadTargetArgs,
+  { repository, req }: Context
 ): Promise<UploadTarget> => {
-  return await repository.upload.getUploadTarget();
+  const origin = getOrigin(req);
+  return await repository.upload.getUploadTarget(args?.data?.key, origin);
 };
 
 export default {

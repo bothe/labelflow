@@ -5,15 +5,15 @@ import { theme } from "../theme";
 class MyDocument extends Document {
   render() {
     return (
-      <Html>
+      <Html lang="en">
         <Head>
-          <meta name="application-name" content="Labelflow" />
+          <meta name="application-name" content="LabelFlow" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta
             name="apple-mobile-web-app-status-bar-style"
             content="default"
           />
-          <meta name="apple-mobile-web-app-title" content="Labelflow" />
+          <meta name="apple-mobile-web-app-title" content="LabelFlow" />
           <meta
             name="description"
             content="The open platform for image labeling."
@@ -84,8 +84,36 @@ class MyDocument extends Document {
           `,
             }}
           />
+          {/* Microsoft Clarity, See https://docs.microsoft.com/en-us/clarity/clarity-setup */}
+          <script
+            type="text/javascript"
+            // eslint-disable-next-line react/no-danger
+            dangerouslySetInnerHTML={{
+              __html: `
+            (function(c,l,a,r,i,t,y){
+              c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+              t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+              y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window, document, "clarity", "script", "${process.env.NEXT_PUBLIC_CLARITY}");
+          `,
+            }}
+          />
+          <style>
+            {/* https://github.com/vercel/next.js/issues/4834 */}
+            {`
+            #__next { flex-grow: 1; display: flex; flex-direction: column; min-height: 0; }
+          `}
+          </style>
         </Head>
-        <body>
+        <body
+          style={{
+            position: "unset",
+            display: "flex",
+            flexDirection: "column",
+            minHeight: "100vh",
+            maxHeight: "100vh",
+          }}
+        >
           <ColorModeScript initialColorMode={theme.config.initialColorMode} />
           <Main />
           <NextScript />

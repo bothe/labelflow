@@ -20,15 +20,35 @@ type Query {
     skip: Int
   ): [LabelClass!]!
   labelClassesAggregates: LabelClassesAggregates!
+  labelClassExists(where: LabelClassWhereInput!): Boolean!
 
   labelsAggregates: LabelsAggregates!
   label(where: LabelWhereUniqueInput!): Label!
   labels(where: LabelWhereInput, first: Int, skip: Int): [Label!]!
 
   dataset(where: DatasetWhereUniqueInput!): Dataset!
-  datasets(first: Int, skip: Int): [Dataset!]!
+  datasets(where: DatasetWhereInput, first: Int, skip: Int): [Dataset!]!
+  searchDataset(where: DatasetWhereUniqueInput!): Dataset
 
-  exportToCoco(where: ExportWhereUniqueInput!): String!
+  workspace(where: WorkspaceWhereUniqueInput!): Workspace!
+  workspaces(first: Int, skip: Int, where: WorkspaceWhereInput): [Workspace!]!
+  workspaceExists(where: WorkspaceWhereUniqueInput!): Boolean!
+
+  membership(where: MembershipWhereUniqueInput!): Membership!
+  memberships(
+    where: MembershipWhereInput
+    first: Int
+    skip: Int
+  ): [Membership!]!
+
+  user(where: UserWhereUniqueInput!): User!
+  users(first: Int, skip: Int): [User!]!
+
+  exportDataset(
+    where: ExportWhereUniqueInput!
+    format: ExportFormat!
+    options: ExportOptions
+  ): String!
 
   debug: JSON!
 }

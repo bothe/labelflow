@@ -5,6 +5,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+python/iog/data
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
@@ -70,7 +71,8 @@ typings/
 
 # dotenv environment variables file
 .env
-.env.test
+.env.local
+.env.production
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -121,11 +123,12 @@ cypress/videos
 !.yarn/sdks
 !.yarn/versions
 
-!.env
-
 # Python
 python/iog/data
+python/iog/outputs
+python/iog/results
 python/iog/inputs
+python/iog/cache
 .venv
 __pycache__
 
@@ -141,3 +144,4 @@ storybook-static
 **/public/sw.js.*
 **/public/worker-*.js.*
 **/public/*.chunk.*.js.*
+.env

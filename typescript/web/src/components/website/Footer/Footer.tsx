@@ -1,11 +1,11 @@
-import { Box, Stack, StackDivider } from "@chakra-ui/react";
+import { Box, Stack, StackDivider, VisuallyHidden } from "@chakra-ui/react";
 import * as React from "react";
 import NextLink from "next/link";
 import { Copyright } from "./Copyright";
 import { LinkGrid } from "./LinkGrid";
-import { Logo } from "../Logo";
 import { SocialMediaLinks } from "./SocialMediaLinks";
 import { SubscribeForm } from "./SubscribeForm";
+import { Logo } from "../../logo";
 
 export const Footer = () => (
   <Box
@@ -21,18 +21,19 @@ export const Footer = () => (
         direction={{ base: "column", lg: "row" }}
         spacing={{ base: "10", lg: "28" }}
       >
-        <Box as="a" flex="1">
-          <NextLink href="/website">
-            <Logo h="24px" iconColor="brand.400" cursor="pointer" />
-          </NextLink>
-        </Box>
+        <NextLink href="/website">
+          <Box as="a" href="/website" mx={{ base: "auto", lg: "0" }}>
+            <VisuallyHidden>LabelFlow</VisuallyHidden>
+            <Logo h="6" cursor="pointer" />
+          </Box>
+        </NextLink>
 
         <Stack
-          direction={{ base: "column", md: "row" }}
-          spacing={{ base: "10", md: "20" }}
+          direction={{ base: "column", xl: "row" }}
+          spacing={{ base: "10", xl: "20" }}
         >
-          <LinkGrid spacing={{ base: "10", md: "20", lg: "28" }} flex="1" />
-          <SubscribeForm width={{ base: "full", md: "sm" }} />
+          <LinkGrid spacing={{ base: "10", md: "20" }} flex="1" />
+          <SubscribeForm />
         </Stack>
       </Stack>
       <Stack

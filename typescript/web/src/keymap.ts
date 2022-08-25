@@ -8,6 +8,11 @@ export type Keymap = {
 
 export const keymap: Keymap = {
   toolSelect: { key: "v", description: "Selection tool", category: "Tools" },
+  toolClassification: {
+    key: "k",
+    description: "Classification tool",
+    category: "Tools",
+  },
   toolBoundingBox: {
     key: "b",
     description: "Bounding box tool",
@@ -18,15 +23,35 @@ export const keymap: Keymap = {
     description: "Polygon tool",
     category: "Tools",
   },
+  toolFreehand: {
+    key: "h",
+    description: "Freehand tool",
+    category: "Tools",
+  },
+  toolAiAssistant: {
+    key: "i",
+    description: "AI Assistant tool",
+    category: "Tools",
+  },
+  runAiAssistant: {
+    key: "r",
+    description: "Run AI Assistant tool",
+    category: "Tools",
+  },
   openLabelClassSelectionPopover: {
     key: "c",
     description: "Change class of currently selected label",
-    category: "Tools",
+    category: "Actions",
+  },
+  deselect: {
+    key: "d",
+    description: "Clear selection",
+    category: "Actions",
   },
   deleteLabel: {
     key: "del,delete,backspace",
     description: "Delete selected label",
-    category: "Tools",
+    category: "Actions",
   },
   goToPreviousImage: {
     key: "left",
@@ -56,11 +81,47 @@ export const keymap: Keymap = {
   changeClass: {
     key: "0,1,2,3,4,5,6,7,8,9", // TODO: display is messy on the shortcut modal with such an amount of shortcut, how to tackle that?
     description: "Select class corresponding to shortcut",
-    category: "Tools", // TODO: change that category?
+    category: "Actions", // TODO: change that category?
   },
   focusLabelClassSearch: {
-    key: "/,f", // TODO: We changed the key "/" to "s" because the slash key was not detected by useHotKeys
-    description: "Focus on search input in label class selection",
-    category: "Tools", // TODO: change that category?
+    key: "/,s", // TODO: We changed the key "/" to "s" because the slash key was not detected by useHotKeys
+    description: "Search class by name input in class selection",
+    category: "Actions", // TODO: change that category?
+  },
+  toolIog: {
+    key: "a",
+    description: "Auto-Polygon",
+    category: "Tools",
+  },
+  changeSelectionMode: {
+    key: "e",
+    description:
+      "Switch between default selection and Auto-Polygon edition tool",
+    category: "Tools",
+  },
+  validateIogLabel: {
+    key: "enter",
+    description: "Validate the edition of an Auto-Polygon label",
+    category: "Tools",
+  },
+  enterFullScreen: {
+    key: "f",
+    description: "Enter Full Screen",
+    category: "View",
+  },
+  zoomIn: {
+    key: "+,=",
+    description: "Zoom in",
+    category: "View",
+  },
+  zoomOut: {
+    key: "-",
+    description: "Zoom out",
+    category: "View",
+  },
+  toggleViewMode: {
+    key: "x",
+    description: "Toggle view mode",
+    category: "View",
   },
 };

@@ -1,55 +1,42 @@
-import React from "react";
 import { gql, useQuery } from "@apollo/client";
-import NextLink from "next/link";
 import {
+  Box,
+  Center,
+  Code,
   Heading,
   Link,
-  VStack,
-  UnorderedList,
   ListItem,
-  Code,
-  Center,
-  Box,
-  Breadcrumb,
-  BreadcrumbItem,
   Text,
+  UnorderedList,
+  VStack,
 } from "@chakra-ui/react";
 import { detect } from "detect-browser";
-import { RiArrowRightSLine } from "react-icons/ri";
+import NextLink from "next/link";
+import React from "react";
+import { Authenticated } from "../components/auth";
+import { CookieBanner } from "../components/cookie-banner";
+import { Layout } from "../components/layout";
+import { NavLogo } from "../components/logo/nav-logo";
 import { Meta } from "../components/meta";
-
 import {
-  isInWindowScope,
-  isInServiceWorkerScope,
   isDevelopmentEnvironment,
+  isInWindowScope,
 } from "../utils/detect-scope";
 
-import { Layout } from "../components/layout";
-
-export const debugQuery = gql`
-  query getDebug {
+export const DEBUG_QUERY = gql`
+  query GetDebugQuery {
     debug
   }
 `;
 
 const DebugPage = () => {
-  const { data: debugResult } = useQuery<{ debug: any }>(debugQuery);
+  const { data: debugResult } = useQuery<{ debug: any }>(DEBUG_QUERY);
 
   return (
-    <>
-      <Meta title="Labelflow | Debug" />
-      <Layout
-        topBarLeftContent={
-          <Breadcrumb
-            spacing="8px"
-            separator={<RiArrowRightSLine color="gray.500" />}
-          >
-            <BreadcrumbItem>
-              <Text>Debug</Text>
-            </BreadcrumbItem>
-          </Breadcrumb>
-        }
-      >
+    <Authenticated>
+      <Meta title="LabelFlow | Debug" />
+      <CookieBanner />
+      <Layout breadcrumbs={[<NavLogo key={0} />, <Text key={1}>Debug</Text>]}>
         <Center h="full">
           <Box as="section">
             <VStack
@@ -75,6 +62,26 @@ const DebugPage = () => {
                     href={`https://github.com/${process.env.NEXT_PUBLIC_VERCEL_GIT_REPO_OWNER}/${process.env.NEXT_PUBLIC_VERCEL_GIT_REPO_SLUG}/issues/new/choose`}
                   >
                     Link to Github issue tracker
+                  </Link>
+                </ListItem>
+
+                <ListItem>
+                  <Link
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://sentry.io/organizations/labelflow/projects/labelflow/"
+                  >
+                    Link to Sentry error tracker
+                  </Link>
+                </ListItem>
+
+                <ListItem>
+                  <Link
+                    target="_blank"
+                    rel="noreferrer"
+                    href={`https://clarity.microsoft.com/projects/view/${process.env.NEXT_PUBLIC_CLARITY}/dashboard`}
+                  >
+                    Link to Clarity usage analytics
                   </Link>
                 </ListItem>
 
@@ -108,7 +115,7 @@ const DebugPage = () => {
                   <Link
                     target="_blank"
                     rel="noreferrer"
-                    href="https://app.supabase.io/dataset/zokyprbhquvvrleedkkk/editor/table"
+                    href="https://app.supabase.io/project/zokyprbhquvvrleedkkk/editor/table"
                   >
                     Link to Database admin
                   </Link>
@@ -182,9 +189,8 @@ const DebugPage = () => {
               <Code as="p" whiteSpace="pre-wrap" width="full">
                 {JSON.stringify(
                   {
-                    serverType: "Standard Labelflow Client App",
+                    clientType: "Standard LabelFlow Client App",
                     isInWindowScope,
-                    isInServiceWorkerScope,
                     isDevelopmentEnvironment,
                     browser: { ...detect() },
                     env: {
@@ -214,6 +220,8 @@ const DebugPage = () => {
                         process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_AUTHOR_LOGIN,
                       NEXT_PUBLIC_VERCEL_GIT_COMMIT_AUTHOR_NAME:
                         process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_AUTHOR_NAME,
+                      NEXT_PUBLIC_IOG_API_ENDPOINT:
+                        process.env.NEXT_PUBLIC_IOG_API_ENDPOINT,
                     },
                   },
                   null,
@@ -232,7 +240,7 @@ const DebugPage = () => {
           </Box>
         </Center>
       </Layout>
-    </>
+    </Authenticated>
   );
 };
 

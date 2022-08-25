@@ -2,36 +2,59 @@ import {
   Box,
   Stack,
   Heading,
+  LightMode,
+  Button,
   Text,
+  Center,
   SimpleGrid,
-  useColorModeValue as mode,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import * as React from "react";
+import { DOCUMENTATION_URL } from "../../../constants";
 import * as Logo from "./Brands";
 
 export const LogoGrid = () => {
   return (
-    <Box as="section" py="48" bg={mode("gray.50", "gray.800")}>
+    <Box as="section" py="48" bg={useColorModeValue("gray.50", "gray.800")}>
       <Box
         maxW={{ base: "xl", md: "7xl" }}
         mx="auto"
         px={{ base: "6", md: "8" }}
       >
         <Heading align="center" fontWeight="extrabold" maxW="lg" mx="auto">
-          Connect seamlessly with the best data tools
+          Connect seamlessly with the best machine learning tools
         </Heading>
         <Text align="center" textAlign="center" maxW="lg" mx="auto" mt="12">
           An added benefit of being <strong>open source</strong> is that
-          Labelflow can integrate with a ton of tools in the ecosystem, thanks
-          to a clean <strong>API and SDKs</strong>. Image storage, databases,
-          data warehouses, deployment tools and AI libraries all work seamlessly
-          with Labelflow.
+          LabelFlow image labeling tool can integrate with a ton of tools in the
+          ecosystem, thanks to a clean <strong>API and SDKs</strong>. Image
+          storage, databases, data warehouses, deployment tools and AI libraries
+          all work seamlessly with LabelFlow. If you want to make it easier you
+          can also export your datasets in COCO or YOLO format for example.
         </Text>
+        <Center>
+          <Box>
+            <LightMode>
+              <Button
+                mt="8"
+                as="a"
+                href={DOCUMENTATION_URL}
+                target="blank"
+                size="lg"
+                colorScheme="brand"
+                fontWeight="bold"
+              >
+                Discover more
+              </Button>
+            </LightMode>
+          </Box>
+        </Center>
+
         <SimpleGrid
           columns={{ base: 1, sm: 2, md: 4 }}
           mt="24"
           spacing="6"
-          color={mode("inherit", "white")}
+          color={useColorModeValue("inherit", "white")}
         >
           <Stack
             as="a"
@@ -41,8 +64,7 @@ export const LogoGrid = () => {
             alignItems="center"
             py="6"
             px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
+            bg={useColorModeValue("white", "gray.900")}
             rounded={{ md: "lg" }}
             _hover={{ shadow: "lg" }}
             transitionProperty="box-shadow"
@@ -59,8 +81,7 @@ export const LogoGrid = () => {
             alignItems="center"
             py="6"
             px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
+            bg={useColorModeValue("white", "gray.900")}
             rounded={{ md: "lg" }}
             _hover={{ shadow: "lg" }}
             transitionProperty="box-shadow"
@@ -77,8 +98,7 @@ export const LogoGrid = () => {
             alignItems="center"
             py="6"
             px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
+            bg={useColorModeValue("white", "gray.900")}
             rounded={{ md: "lg" }}
             _hover={{ shadow: "lg" }}
             transitionProperty="box-shadow"
@@ -96,8 +116,7 @@ export const LogoGrid = () => {
             alignItems="center"
             py="6"
             px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
+            bg={useColorModeValue("white", "gray.900")}
             rounded={{ md: "lg" }}
             _hover={{ shadow: "lg" }}
             transitionProperty="box-shadow"
@@ -115,8 +134,7 @@ export const LogoGrid = () => {
             alignItems="center"
             py="6"
             px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
+            bg={useColorModeValue("white", "gray.900")}
             rounded={{ md: "lg" }}
             _hover={{ shadow: "lg" }}
             transitionProperty="box-shadow"
@@ -134,8 +152,7 @@ export const LogoGrid = () => {
             alignItems="center"
             py="6"
             px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
+            bg={useColorModeValue("white", "gray.900")}
             rounded={{ md: "lg" }}
             _hover={{ shadow: "lg" }}
             transitionProperty="box-shadow"
@@ -153,8 +170,7 @@ export const LogoGrid = () => {
             alignItems="center"
             py="6"
             px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
+            bg={useColorModeValue("white", "gray.900")}
             rounded={{ md: "lg" }}
             _hover={{ shadow: "lg" }}
             transitionProperty="box-shadow"
@@ -172,8 +188,7 @@ export const LogoGrid = () => {
             alignItems="center"
             py="6"
             px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
+            bg={useColorModeValue("white", "gray.900")}
             rounded={{ md: "lg" }}
             _hover={{ shadow: "lg" }}
             transitionProperty="box-shadow"
@@ -191,8 +206,7 @@ export const LogoGrid = () => {
             alignItems="center"
             py="6"
             px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
+            bg={useColorModeValue("white", "gray.900")}
             rounded={{ md: "lg" }}
             _hover={{ shadow: "lg" }}
             transitionProperty="box-shadow"
@@ -210,8 +224,7 @@ export const LogoGrid = () => {
             alignItems="center"
             py="6"
             px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
+            bg={useColorModeValue("white", "gray.900")}
             rounded={{ md: "lg" }}
             _hover={{ shadow: "lg" }}
             transitionProperty="box-shadow"
@@ -229,8 +242,7 @@ export const LogoGrid = () => {
             alignItems="center"
             py="6"
             px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
+            bg={useColorModeValue("white", "gray.900")}
             rounded={{ md: "lg" }}
             _hover={{ shadow: "lg" }}
             transitionProperty="box-shadow"
@@ -248,8 +260,7 @@ export const LogoGrid = () => {
             alignItems="center"
             py="6"
             px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
+            bg={useColorModeValue("white", "gray.900")}
             rounded={{ md: "lg" }}
             _hover={{ shadow: "lg" }}
             transitionProperty="box-shadow"
@@ -267,8 +278,7 @@ export const LogoGrid = () => {
             alignItems="center"
             py="6"
             px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
+            bg={useColorModeValue("white", "gray.900")}
             rounded={{ md: "lg" }}
             _hover={{ shadow: "lg" }}
             transitionProperty="box-shadow"
@@ -286,8 +296,7 @@ export const LogoGrid = () => {
             alignItems="center"
             py="6"
             px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
+            bg={useColorModeValue("white", "gray.900")}
             rounded={{ md: "lg" }}
             _hover={{ shadow: "lg" }}
             transitionProperty="box-shadow"
@@ -296,39 +305,6 @@ export const LogoGrid = () => {
             <Logo.Typescript h="8" opacity={0.92} />
             <Text>Typescript</Text>
           </Stack>
-
-          {/* <Stack
-            as="a" target = "_blank"
-            href="https://reactjs.org/"
-            alignItems="center"
-            py="6"
-            px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
-            rounded={{ md: "lg" }}
-                _hover={{ shadow: "lg" }}
-            transitionProperty="box-shadow"
-            transitionDuration="0.1s"
-          >
-            <Logo.ReactLogo h="8" opacity={0.92} />
-            <Text>React</Text>
-          </Stack> */}
-          {/* <Stack
-            as="a" target = "_blank"
-            href="https://nextjs.org/"
-            alignItems="center"
-            py="6"
-            px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
-            rounded={{ md: "lg" }}
-                _hover={{ shadow: "lg" }}
-            transitionProperty="box-shadow"
-            transitionDuration="0.1s"
-          >
-            <Logo.NextJs h="8" opacity={0.92} />
-            <Text>Next.Js</Text>
-          </Stack> */}
           <Stack
             as="a"
             target="_blank"
@@ -337,8 +313,7 @@ export const LogoGrid = () => {
             alignItems="center"
             py="6"
             px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
+            bg={useColorModeValue("white", "gray.900")}
             rounded={{ md: "lg" }}
             _hover={{ shadow: "lg" }}
             transitionProperty="box-shadow"
@@ -347,55 +322,6 @@ export const LogoGrid = () => {
             <Logo.GraphQl h="8" opacity={0.92} />
             <Text>GraphQL</Text>
           </Stack>
-          {/* <Stack
-            as="a" target = "_blank"
-            href="https://www.prisma.io/"
-            alignItems="center"
-            py="6"
-            px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
-            rounded={{ md: "lg" }}
-                _hover={{ shadow: "lg" }}
-            transitionProperty="box-shadow"
-            transitionDuration="0.1s"
-          >
-            <Logo.Prisma h="8" opacity={0.92} />
-            <Text>Prisma</Text>
-          </Stack> */}
-
-          {/* <Stack
-            as="a" target = "_blank"
-            href="https://next-auth.js.org/"
-            alignItems="center"
-            py="6"
-            px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
-            rounded={{ md: "lg" }}
-                _hover={{ shadow: "lg" }}
-            transitionProperty="box-shadow"
-            transitionDuration="0.1s"
-          >
-            <Logo.NextAuth h="8" opacity={0.92} />
-            <Text>Next-Auth</Text>
-          </Stack> */}
-          {/* <Stack
-            as="a" target = "_blank"
-            href="https://www.apollographql.com/"
-            alignItems="center"
-            py="6"
-            px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
-            rounded={{ md: "lg" }}
-                _hover={{ shadow: "lg" }}
-            transitionProperty="box-shadow"
-            transitionDuration="0.1s"
-          >
-            <Logo.Apollo h="8" opacity={0.92} />
-            <Text>Apollo</Text>
-          </Stack> */}
           <Stack
             as="a"
             target="_blank"
@@ -404,8 +330,7 @@ export const LogoGrid = () => {
             alignItems="center"
             py="6"
             px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
+            bg={useColorModeValue("white", "gray.900")}
             rounded={{ md: "lg" }}
             _hover={{ shadow: "lg" }}
             transitionProperty="box-shadow"
@@ -414,54 +339,6 @@ export const LogoGrid = () => {
             <Logo.Github h="8" opacity={0.92} />
             <Text>Github</Text>
           </Stack>
-          {/* <Stack
-            as="a" target = "_blank"
-            href="https://www.heroku.com/"
-            alignItems="center"
-            py="6"
-            px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
-            rounded={{ md: "lg" }}
-                _hover={{ shadow: "lg" }}
-            transitionProperty="box-shadow"
-            transitionDuration="0.1s"
-          >
-            <Logo.Heroku h="8" opacity={0.92} />
-            <Text>Heroku</Text>
-          </Stack> */}
-          {/* <Stack
-            as="a" target = "_blank"
-            href="https://www.stripe.com/"
-            alignItems="center"
-            py="6"
-            px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
-            rounded={{ md: "lg" }}
-                _hover={{ shadow: "lg" }}
-            transitionProperty="box-shadow"
-            transitionDuration="0.1s"
-          >
-            <Logo.Stripe h="8" opacity={0.92} />
-            <Text>Stripe</Text>
-          </Stack> */}
-          {/* <Stack
-            as="a" target = "_blank"
-            href="https://postmarkapp.com/"
-            alignItems="center"
-            py="6"
-            px="8"
-            // bg={mode("gray.50", "gray.800")}
-            bg={mode("white", "gray.900")}
-            rounded={{ md: "lg" }}
-                _hover={{ shadow: "lg" }}
-            transitionProperty="box-shadow"
-            transitionDuration="0.1s"
-          >
-            <Logo.Postmark h="8" opacity={0.92} />
-            <Text>Postmark</Text>
-          </Stack> */}
         </SimpleGrid>
       </Box>
     </Box>

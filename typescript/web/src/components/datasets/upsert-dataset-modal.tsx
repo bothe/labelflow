@@ -1,59 +1,38 @@
-import { gql, useMutation, useLazyQuery, useQuery } from "@apollo/client";
-import slugify from "slugify";
-import { useEffect, useState, useCallback, useRef } from "react";
-import debounce from "lodash/fp/debounce";
-
+import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalCloseButton,
-  ModalFooter,
   Button,
-  ModalHeader,
-  Heading,
-  ModalBody,
-  Input,
   FormControl,
   FormErrorMessage,
   FormLabel,
+  Heading,
+  Input,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
 } from "@chakra-ui/react";
+import { getSlug } from "@labelflow/common-resolvers";
+import { isEmpty } from "lodash/fp";
+import debounce from "lodash/fp/debounce";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  GetDatasetByIdQuery,
+  GetDatasetByIdQueryVariables,
+} from "../../graphql-types/GetDatasetByIdQuery";
+import { useWorkspace } from "../../hooks";
+import { WORKSPACE_DATASETS_PAGE_DATASETS_QUERY } from "../../shared-queries/workspace-datasets-page.query";
+import { CREATE_DATASET_MUTATION } from "./create-dataset.mutation";
+import {
+  GET_DATASET_BY_ID_QUERY,
+  SEARCH_DATASET_BY_SLUG_QUERY,
+} from "./datasets.query";
+import { GET_DATASETS_IDS_QUERY } from "./get-datasets-ids.query";
+import { UPDATE_DATASET_MUTATION } from "./update-dataset.mutation";
 
 const debounceTime = 200;
-
-const createDatasetMutation = gql`
-  mutation createDataset($name: String!) {
-    createDataset(data: { name: $name }) {
-      id
-    }
-  }
-`;
-
-const updateDatasetMutation = gql`
-  mutation updateDataset($id: ID!, $name: String!) {
-    updateDataset(where: { id: $id }, data: { name: $name }) {
-      id
-    }
-  }
-`;
-
-const getDatasetBySlugQuery = gql`
-  query getDatasetBySlug($slug: String) {
-    dataset(where: { slug: $slug }) {
-      id
-      slug
-    }
-  }
-`;
-
-const getDatasetByIdQuery = gql`
-  query getDatasetById($id: ID) {
-    dataset(where: { id: $id }) {
-      id
-      name
-    }
-  }
-`;
 
 export const UpsertDatasetModal = ({
   isOpen = false,
@@ -64,23 +43,28 @@ export const UpsertDatasetModal = ({
   onClose?: () => void;
   datasetId?: string;
 }) => {
+  const { slug: workspaceSlug } = useWorkspace();
+
   const [datasetNameInputValue, setDatasetNameInputValue] =
     useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   const datasetName = datasetNameInputValue.trim();
 
-  useQuery(getDatasetByIdQuery, {
-    skip: typeof datasetId !== "string",
-    variables: { id: datasetId },
-    fetchPolicy: "cache-and-network",
-    onError: (e) => {
-      setErrorMessage(e.message);
-    },
-    onCompleted: ({ dataset }) => {
-      setDatasetNameInputValue(dataset.name);
-    },
-  });
+  useQuery<GetDatasetByIdQuery, GetDatasetByIdQueryVariables>(
+    GET_DATASET_BY_ID_QUERY,
+    {
+      skip: typeof datasetId !== "string" || isEmpty(datasetId),
+      variables: { id: datasetId ?? "" },
+      fetchPolicy: "cache-and-network",
+      onError: (e) => {
+        setErrorMessage(e.message);
+      },
+      onCompleted: ({ dataset }) => {
+        setDatasetNameInputValue(dataset.name);
+      },
+    }
+  );
 
   const [
     queryExistingDatasets,
@@ -89,49 +73,64 @@ export const UpsertDatasetModal = ({
       loading: loadingExistingDatasets,
       variables: variablesExistingDatasets,
     },
-  ] = useLazyQuery(getDatasetBySlugQuery, { fetchPolicy: "network-only" });
-
-  const [createDatasetMutate] = useMutation(createDatasetMutation, {
-    variables: {
-      name: datasetName,
-    },
-    refetchQueries: ["getDatasets"],
-    awaitRefetchQueries: true,
+  ] = useLazyQuery(SEARCH_DATASET_BY_SLUG_QUERY, {
+    fetchPolicy: "network-only",
   });
 
-  const [updateDatasetMutate] = useMutation(updateDatasetMutation, {
-    variables: {
-      id: datasetId,
-      name: datasetName,
-    },
-    refetchQueries: ["getDatasets"],
-    awaitRefetchQueries: true,
-  });
+  const [createDatasetMutate, { loading: createMutationLoading }] = useMutation(
+    CREATE_DATASET_MUTATION,
+    {
+      variables: {
+        name: datasetName,
+        workspaceSlug,
+      },
+      refetchQueries: [
+        GET_DATASETS_IDS_QUERY,
+        WORKSPACE_DATASETS_PAGE_DATASETS_QUERY,
+      ],
+      awaitRefetchQueries: true,
+    }
+  );
+
+  const [updateDatasetMutate, { loading: updateMutationLoading }] = useMutation(
+    UPDATE_DATASET_MUTATION,
+    {
+      variables: {
+        id: datasetId,
+        name: datasetName,
+      },
+      refetchQueries: [
+        GET_DATASETS_IDS_QUERY,
+        WORKSPACE_DATASETS_PAGE_DATASETS_QUERY,
+      ],
+      awaitRefetchQueries: true,
+    }
+  );
 
   const handleInputValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDatasetNameInputValue(e.target.value);
   };
 
   const debouncedQuery = useRef(
-    debounce(debounceTime, (nextName: string) => {
-      queryExistingDatasets({
-        variables: { slug: slugify(nextName, { lower: true }) },
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    debounce(debounceTime, (nextName: string, workspaceSlug: string) => {
+      return queryExistingDatasets({
+        variables: { slug: getSlug(nextName), workspaceSlug },
       });
     })
   ).current;
 
   useEffect(() => {
-    if (datasetName === "") return;
-
-    debouncedQuery(datasetName);
-  }, [datasetName]);
+    if (datasetName === "" || workspaceSlug == null) return;
+    debouncedQuery(datasetName, workspaceSlug);
+  }, [datasetName, workspaceSlug]);
 
   useEffect(() => {
     if (
-      existingDataset != null &&
+      existingDataset?.searchDataset?.id != null &&
       !loadingExistingDatasets &&
-      existingDataset?.dataset?.id !== datasetId &&
-      variablesExistingDatasets?.slug === slugify(datasetName, { lower: true })
+      existingDataset?.searchDataset?.id !== datasetId &&
+      variablesExistingDatasets?.slug === getSlug(datasetName)
     ) {
       setErrorMessage("This name is already taken");
     } else {
@@ -152,7 +151,7 @@ export const UpsertDatasetModal = ({
         }
 
         onClose();
-      } catch (error) {
+      } catch (error: any) {
         setErrorMessage(error.message);
       }
     },
@@ -210,10 +209,12 @@ export const UpsertDatasetModal = ({
           <Button
             type="submit"
             colorScheme="brand"
+            isLoading={createMutationLoading || updateMutationLoading}
+            loadingText={datasetId ? "Updating..." : "Creating..."}
             disabled={!canCreateDataset()}
-            aria-label={datasetId ? "Update dataset" : "Create Dataset"}
+            aria-label={datasetId ? "Update Dataset" : "Create Dataset"}
           >
-            {datasetId ? "Update dataset" : "Start Labelling"}
+            {datasetId ? "Update Dataset" : "Start Labeling"}
           </Button>
         </ModalFooter>
       </ModalContent>

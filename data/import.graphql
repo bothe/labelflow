@@ -1,0 +1,18 @@
+type ImportStatus{
+    error: String
+    warnings: [String!]
+}
+
+input ImportOptionsCoco {
+    annotationsOnly: Boolean
+}
+
+input ImportOptions {
+    coco: ImportOptionsCoco
+}
+
+input DatasetImportInput{
+    url: String!
+    format: ExportFormat!
+    options: ImportOptions
+}

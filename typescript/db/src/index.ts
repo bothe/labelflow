@@ -1,34 +1,18 @@
-import { ApolloServer } from "apollo-server";
-import { join } from "path";
-import { loadSchemaSync } from "@graphql-tools/load";
-import { GraphQLFileLoader } from "@graphql-tools/graphql-file-loader";
-import { addResolversToSchema } from "@graphql-tools/schema";
+// import { addResolversToSchema } from "@graphql-tools/schema";
 
-import { resolvers } from "./resolvers";
-import { repository } from "./repository";
+import { resolvers as resolversImport } from "./resolvers";
 
-const schema = loadSchemaSync(
-  join(__dirname, "../../../data/__generated__/schema.graphql"),
-  {
-    loaders: [new GraphQLFileLoader()],
-  }
-);
+import { typeDefs as typeDefsImport } from "./__generated__/schema";
 
-const schemaWithResolvers = addResolversToSchema({
-  schema,
-  resolvers,
-});
+export { repository } from "./repository";
 
-const server = new ApolloServer({
-  introspection: true,
-  context: { repository },
-  schema: schemaWithResolvers,
-});
+export const resolvers = resolversImport;
 
-server.listen({ port: 5000 }).then(async ({ url }) => {
-  // eslint-disable-next-line no-console
-  console.log(`\
-  🚀 Server ready at: ${url}
-  ⭐️ See sample queries: http://pris.ly/e/ts/graphql#using-the-graphql-api
-    `);
-});
+export const typeDefs = typeDefsImport;
+
+// export const schemaWithResolvers = addResolversToSchema({
+//   schema,
+//   resolvers,
+// });
+
+export * from "./prisma-client";

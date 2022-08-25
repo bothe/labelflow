@@ -1,59 +1,38 @@
+import { Flex, Text } from "@chakra-ui/react";
 import dynamic from "next/dynamic";
-import {
-  Box,
-  Breadcrumb,
-  BreadcrumbItem,
-  Center,
-  Spinner,
-  Text,
-} from "@chakra-ui/react";
-
-import { RiArrowRightSLine } from "react-icons/ri";
-import { Meta } from "../components/meta";
+import React from "react";
+import { Authenticated } from "../components/auth";
+import { CookieBanner } from "../components/cookie-banner";
 import { Layout } from "../components/layout";
-import { AppLifecycleManager } from "../components/app-lifecycle-manager";
+import { NavLogo } from "../components/logo/nav-logo";
+import { Meta } from "../components/meta";
+import { LayoutSpinner } from "../components";
 
 const GraphiQL = dynamic(() => import("../components/graphiql"), {
   ssr: false,
   loading: ({ error }) => {
     if (error) throw error;
-    return (
-      <Center h="full">
-        <Spinner size="xl" />
-      </Center>
-    );
+    return <LayoutSpinner />;
   },
 });
 
-const GraphqlPlayground = () => {
-  return (
-    <>
-      <AppLifecycleManager />
-      <Meta title="Labelflow | GraphiQL" />
-      <Layout
-        topBarLeftContent={
-          <Breadcrumb
-            spacing="8px"
-            separator={<RiArrowRightSLine color="gray.500" />}
-          >
-            <BreadcrumbItem>
-              <Text>Graphiql</Text>
-            </BreadcrumbItem>
-          </Breadcrumb>
-        }
+const GraphqlPlayground = () => (
+  <Authenticated>
+    <Meta title="LabelFlow | GraphiQL" />
+    <CookieBanner />
+    <Layout breadcrumbs={[<NavLogo key={0} />, <Text key={0}>Graphiql</Text>]}>
+      <Flex
+        grow={1}
+        borderTop="solid 1px"
+        borderColor="#d0d0d0"
+        boxSizing="border-box"
       >
-        <Box
-          h="100%"
-          w="100%"
-          borderTop="solid 1px"
-          borderColor="#d0d0d0"
-          boxSizing="border-box"
-        >
-          <GraphiQL />
-        </Box>
-      </Layout>
-    </>
-  );
-};
+        {globalThis.location && (
+          <GraphiQL url={`${globalThis.location.origin}/api/graphql`} />
+        )}
+      </Flex>
+    </Layout>
+  </Authenticated>
+);
 
 export default GraphqlPlayground;

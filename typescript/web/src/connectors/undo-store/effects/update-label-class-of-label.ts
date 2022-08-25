@@ -1,26 +1,21 @@
 import { gql, ApolloClient } from "@apollo/client";
 
-import { useLabellingStore } from "../../labelling-state";
+import { useLabelingStore } from "../../labeling-state";
 import { Effect } from "..";
 
-const labelQuery = gql`
-  query getLabel($id: ID!) {
-    label(where: { id: $id }) {
-      id
-      labelClass {
-        id
-      }
-    }
-  }
-`;
+import { updateLabelClassOfLabel } from "./cache-updates/update-label-class-of-label";
+import { GET_LABEL_QUERY } from "./shared-queries";
 
-const updateLabelQuery = gql`
-  mutation updateLabelClass(
+export const UPDATE_LABEL_MUTATION = gql`
+  mutation UpdateLabelClassOfLabelMutation(
     $where: LabelWhereUniqueInput!
     $data: LabelUpdateInput!
   ) {
     updateLabel(where: $where, data: $data) {
       id
+      labelClass {
+        id
+      }
     }
   }
 `;
@@ -37,40 +32,56 @@ export const createUpdateLabelClassOfLabelEffect = (
   }
 ): Effect => ({
   do: async () => {
-    const {
-      data: {
-        label: { labelClass },
-      },
-    } = await client.query({
-      query: labelQuery,
-      variables: { id: selectedLabelId },
-    });
-
-    const labelClassIdPrevious = labelClass?.id ?? null;
-
+    const labelClassIdPrevious = selectedLabelId
+      ? ((
+          await client.query({
+            query: GET_LABEL_QUERY,
+            variables: { id: selectedLabelId },
+          })
+        ).data?.label?.labelClass?.id as string) || null
+      : null;
     await client.mutate({
-      mutation: updateLabelQuery,
+      mutation: UPDATE_LABEL_MUTATION,
       variables: {
         where: { id: selectedLabelId },
-        data: { labelClassId: selectedLabelClassId ?? null },
+        data: { labelClassId: selectedLabelClassId },
       },
-      refetchQueries: ["getImageLabels"],
+      optimisticResponse: {
+        updateLabel: {
+          id: selectedLabelId,
+          labelClass: selectedLabelClassId
+            ? { id: selectedLabelClassId, __typename: "LabelClass" }
+            : null,
+          __typename: "Label",
+        },
+      },
+      update: updateLabelClassOfLabel(labelClassIdPrevious),
     });
-    useLabellingStore.setState({ selectedLabelClassId });
+
+    useLabelingStore.setState({ selectedLabelClassId });
 
     return labelClassIdPrevious;
   },
-  undo: async (labelClassIdPrevious: string) => {
+  undo: async (labelClassIdPrevious: string | null) => {
     await client.mutate({
-      mutation: updateLabelQuery,
+      mutation: UPDATE_LABEL_MUTATION,
       variables: {
         where: { id: selectedLabelId },
-        data: { labelClassId: labelClassIdPrevious ?? null },
+        data: { labelClassId: labelClassIdPrevious },
       },
-      refetchQueries: ["getImageLabels"],
+      optimisticResponse: {
+        updateLabel: {
+          id: selectedLabelId,
+          labelClass: labelClassIdPrevious
+            ? { id: labelClassIdPrevious, __typename: "LabelClass" }
+            : null,
+          __typename: "Label",
+        },
+      },
+      update: updateLabelClassOfLabel(selectedLabelClassId),
     });
 
-    useLabellingStore.setState({ selectedLabelClassId: labelClassIdPrevious });
+    useLabelingStore.setState({ selectedLabelClassId: labelClassIdPrevious });
     return labelClassIdPrevious;
   },
 });

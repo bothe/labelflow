@@ -1,20 +1,23 @@
 import GraphiQLOriginal from "graphiql";
 import "graphiql/graphiql.css";
 import { createGraphiQLFetcher } from "@graphiql/toolkit";
+import { Flex } from "@chakra-ui/react";
 
-export const GraphiQL = () => {
+export const GraphiQL = ({ url }: { url: string }) => {
   const fetcher = createGraphiQLFetcher({
-    url: `${window.location.origin}/api/worker/graphql`,
+    url,
   });
 
   return (
-    <GraphiQLOriginal
-      fetcher={fetcher}
-      editorTheme="dracula"
-      defaultVariableEditorOpen
-      defaultSecondaryEditorOpen
-      headerEditorEnabled
-      shouldPersistHeaders
-    />
+    <Flex grow={1}>
+      <GraphiQLOriginal
+        fetcher={fetcher}
+        editorTheme="dracula"
+        defaultVariableEditorOpen
+        defaultSecondaryEditorOpen
+        headerEditorEnabled
+        shouldPersistHeaders
+      />
+    </Flex>
   );
 };

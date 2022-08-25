@@ -1,6 +1,9 @@
 {
-    "compilerOptions": {
-        "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true
-    }
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "strictNullChecks": true
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
 }

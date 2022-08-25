@@ -1,47 +1,22 @@
-import { gql } from "@apollo/client";
-
-import { client } from "../../typescript/web/src/connectors/apollo-client/schema-client";
 import imageSampleCollection from "../../typescript/web/src/utils/image-sample-collection";
+import { WORKSPACE_SLUG, DATASET_SLUG } from "../fixtures";
 
-const createDataset = async (name: string) => {
-  const mutationResult = await client.mutate({
-    mutation: gql`
-      mutation createDataset($name: String) {
-        createDataset(data: { name: $name }) {
-          id
-          slug
-        }
-      }
-    `,
-    variables: {
-      name,
-    },
+describe("Image Navigation (online)", () => {
+  beforeEach(() => {
+    cy.setCookie("consentedCookies", "true");
+    cy.task("performLogin").then((token) => {
+      cy.setCookie("next-auth.session-token", token as string);
+    });
+    cy.task("createWorkspaceAndDatasets");
   });
-
-  const {
-    data: {
-      createDataset: { slug },
-    },
-  } = mutationResult;
-
-  return slug;
-};
-
-describe("Image Navigation", () => {
-  let datasetSlug: string;
-  beforeEach(() =>
-    cy.window().then(async () => {
-      const slug = await createDataset("cypress test dataset");
-      datasetSlug = slug;
-    })
-  );
 
   it("Should let the user navigate within the image gallery", () => {
     // See https://docs.cypress.io/guides/core-concepts/conditional-testing#Welcome-wizard
     cy.visit(
-      `http://localhost:3000/local/datasets/${datasetSlug}/images?modal-welcome=closed&modal-update-service-worker=update`
+      `/${WORKSPACE_SLUG}/datasets/${DATASET_SLUG}/images?modal-welcome=closed`
     );
-    cy.contains("You don't have any images.").should("be.visible");
+    cy.contains("You don't have any images").should("be.visible");
+    cy.wait(420);
     cy.get("header").within(() => {
       cy.contains("Add images").click();
     });
@@ -50,8 +25,16 @@ describe("Image Navigation", () => {
       delay: 0,
     });
     cy.contains("Start Import").click();
-    cy.get(`[aria-label="Close"]`).click();
-    cy.get("main").contains("photo").click();
+    cy.get(`[data-testid="start-labeling-button"]`).click();
+    cy.get(
+      `[data-testid="image-card-${
+        imageSampleCollection[1]
+          .split("?")[0]
+          .split("https://images.unsplash.com/")[1]
+      }"]`
+    )
+      .trigger("mouseover")
+      .click();
 
     // Check that we can reach the end of the list
     cy.get("main nav").scrollTo("right");

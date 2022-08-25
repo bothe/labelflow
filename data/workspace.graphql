@@ -1,0 +1,24 @@
+input WorkspaceCreateInput {
+  id: ID
+  name: String!
+  image: String
+  plan: WorkspacePlan
+}
+
+input WorkspaceCreateOptions {
+  createTutorial: Boolean
+}
+
+input WorkspaceWhereUniqueInput {
+  id: ID
+  slug: String
+}
+
+input WorkspaceWhereInput {
+  slug: String
+}
+
+input WorkspaceUpdateInput {
+  name: String
+  image: String
+}

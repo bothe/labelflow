@@ -1,36 +1,44 @@
+import { ApolloProvider } from "@apollo/client";
+import { HStack, Spacer } from "@chakra-ui/react";
 import { ReactNode } from "react";
-import { HStack, Spacer, Box, VisuallyHidden } from "@chakra-ui/react";
-import NextLink from "next/link";
-import { Logo } from "../../logo";
+import { distantDatabaseClient } from "../../../connectors/apollo-client/client";
+import {
+  ANNOUNCEKIT_WARNING_URL,
+  Announcements,
+  AnnouncementsButton,
+} from "../../announcements";
+import { ResponsiveBreadcrumbs } from "./breadcrumbs";
 import { HelpMenu } from "./help-menu";
 import { UserMenu } from "./user-menu";
 
-export type Props = {
-  leftContent?: ReactNode;
+const TopBarAnnouncements = () => (
+  <>
+    <Announcements widget={ANNOUNCEKIT_WARNING_URL} labels={["warning"]} />
+    <AnnouncementsButton boosters={false} />
+  </>
+);
+
+export type TopBarProps = {
+  breadcrumbs?: ReactNode;
   rightContent?: ReactNode;
 };
 
-export const TopBar = ({ leftContent, rightContent }: Props) => {
-  return (
+export const TopBar = ({ breadcrumbs, rightContent }: TopBarProps) => (
+  <ApolloProvider client={distantDatabaseClient}>
     <HStack
       as="header"
       alignItems="center"
-      padding={4}
+      padding="6px 16px"
       spacing={4}
-      h="64px"
+      h="56px"
       flex={0}
     >
-      <NextLink href="/">
-        <Box as="a" rel="home" cursor="pointer">
-          <VisuallyHidden>Labelflow</VisuallyHidden>
-          <Logo h="6" iconColor="brand.500" />
-        </Box>
-      </NextLink>
-      {leftContent}
-      <Spacer />
+      <ResponsiveBreadcrumbs>{breadcrumbs}</ResponsiveBreadcrumbs>
+      <Spacer minWidth="6" />
       {rightContent}
+      <TopBarAnnouncements />
       <HelpMenu />
       <UserMenu />
     </HStack>
-  );
-};
+  </ApolloProvider>
+);

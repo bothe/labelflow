@@ -1,66 +1,30 @@
-import { gql, ApolloClient } from "@apollo/client";
+import { ApolloClient } from "@apollo/client";
 
-import { LabelClass } from "@labelflow/graphql-types";
-import { useLabellingStore } from "../../labelling-state";
-import {
-  getNextClassColor,
-  hexColorSequence,
-} from "../../../utils/class-color-generator";
+import { v4 as uuid } from "uuid";
+import { useLabelingStore } from "../../labeling-state";
+
 import { Effect } from "..";
-import { getDatasetsQuery } from "../../../pages/local/datasets";
-import { datasetLabelClassesQuery } from "../../../components/dataset-class-list/class-item";
-
-const labelQuery = gql`
-  query getLabel($id: ID!) {
-    label(where: { id: $id }) {
-      id
-      labelClass {
-        id
-      }
-    }
-  }
-`;
-
-const createLabelClassQuery = gql`
-  mutation createLabelClass($data: LabelClassCreateInput!) {
-    createLabelClass(data: $data) {
-      id
-    }
-  }
-`;
-
-const deleteLabelClassQuery = gql`
-  mutation deleteLabelClass($where: LabelClassWhereUniqueInput!) {
-    deleteLabelClass(where: $where) {
-      id
-    }
-  }
-`;
-
-const updateLabelQuery = gql`
-  mutation updateLabelClass(
-    $where: LabelWhereUniqueInput!
-    $data: LabelUpdateInput!
-  ) {
-    updateLabel(where: $where, data: $data) {
-      id
-    }
-  }
-`;
+import { createLabelClassMutationUpdate } from "./cache-updates/create-label-class-mutation-update";
+import { deleteLabelClassMutationUpdate } from "./cache-updates/delete-label-class-mutation-update";
+import {
+  GET_LABEL_QUERY,
+  CREATE_LABEL_CLASS_QUERY,
+  UPDATE_LABEL_MUTATION,
+  DELETE_LABEL_CLASS_MUTATION,
+} from "./shared-queries";
+import { updateLabelClassOfLabel } from "./cache-updates/update-label-class-of-label";
 
 export const createCreateLabelClassAndUpdateLabelEffect = (
   {
     name,
     color,
     datasetId,
-    datasetSlug,
     selectedLabelId,
   }: {
     name: string;
     color: string;
     datasetId: string;
-    datasetSlug: string;
-    selectedLabelId: string | null;
+    selectedLabelId: string;
   },
   {
     client,
@@ -69,40 +33,74 @@ export const createCreateLabelClassAndUpdateLabelEffect = (
   }
 ): Effect => ({
   do: async () => {
-    const {
-      data: {
-        createLabelClass: { id: labelClassId },
-      },
-    } = await client.mutate({
-      mutation: createLabelClassQuery,
-      variables: { data: { name, color, datasetId } },
-      refetchQueries: [
-        "getLabelClassesOfDataset",
-        { query: getDatasetsQuery },
-        { query: datasetLabelClassesQuery, variables: { slug: datasetSlug } },
-      ],
-    });
+    // We create the labelClassId on the client to be able to return its correct value during the optimistic response
+    const labelClassId = uuid();
 
-    const {
-      data: {
-        label: { labelClass },
-      },
-    } = await client.query({
-      query: labelQuery,
+    const labelPreviousDetailsPromise = client.query({
+      query: GET_LABEL_QUERY,
       variables: { id: selectedLabelId },
     });
 
-    const labelClassIdPrevious = labelClass?.id ?? null;
+    /** There is room for enhancement here.
+     * We await the mutation that create the label class before triggering the mutation which updates the label with the new label class.
+     * This makes the optimistic less useful.
+     * We still need to wait for the first mutation to answer before doing the update and optimistic response of the second one.
+     *
+     * Technically, it is not needed to wait for the first mutation as we already know the id of the label class we will create, however,
+     * we have a check in the backend to ensure that the new label class exist before updating a label. This would add a race condition.
+     *
+     * It would be better if we could create the label class and update the label in the same mutation.
+     */
+    await client.mutate<{
+      createLabelClass: {
+        id: string;
+        name: string;
+        color: string;
+        __typename: "LabelClass";
+      };
+    }>({
+      mutation: CREATE_LABEL_CLASS_QUERY,
+      variables: { data: { name, color, datasetId, id: labelClassId } },
+      optimisticResponse: {
+        createLabelClass: {
+          id: labelClassId,
+          name,
+          color,
+          __typename: "LabelClass",
+        },
+      },
+      update: createLabelClassMutationUpdate(datasetId),
+    });
 
-    await client.mutate({
-      mutation: updateLabelQuery,
+    useLabelingStore.setState({ selectedLabelClassId: labelClassId });
+
+    const labelClassIdPrevious =
+      (await labelPreviousDetailsPromise)?.data?.label?.labelClass?.id ?? null;
+
+    await client.mutate<{
+      updateLabel: {
+        id: string;
+        labelClass: {
+          id: string;
+          __typename: "LabelClass";
+        };
+        __typename: "Label";
+      };
+    }>({
+      mutation: UPDATE_LABEL_MUTATION,
       variables: {
         where: { id: selectedLabelId },
         data: { labelClassId: labelClassId ?? null },
       },
-      refetchQueries: ["getImageLabels"],
+      optimisticResponse: {
+        updateLabel: {
+          id: selectedLabelId,
+          labelClass: { id: labelClassId, __typename: "LabelClass" },
+          __typename: "Label",
+        },
+      },
+      update: updateLabelClassOfLabel(labelClassIdPrevious),
     });
-    useLabellingStore.setState({ selectedLabelClassId: labelClassId });
 
     return {
       labelClassId,
@@ -117,26 +115,36 @@ export const createCreateLabelClassAndUpdateLabelEffect = (
     labelClassIdPrevious: string;
   }) => {
     await client.mutate({
-      mutation: updateLabelQuery,
+      mutation: UPDATE_LABEL_MUTATION,
       variables: {
         where: { id: selectedLabelId },
         data: { labelClassId: labelClassIdPrevious ?? null },
       },
-      refetchQueries: ["getImageLabels"],
+      optimisticResponse: {
+        updateLabel: {
+          id: selectedLabelId,
+          labelClass: labelClassIdPrevious
+            ? { id: labelClassIdPrevious, __typename: "LabelClass" }
+            : null,
+          __typename: "Label",
+        },
+      },
+      update: updateLabelClassOfLabel(labelClassId),
     });
+
+    useLabelingStore.setState({ selectedLabelClassId: labelClassIdPrevious });
+
     await client.mutate({
-      mutation: deleteLabelClassQuery,
+      mutation: DELETE_LABEL_CLASS_MUTATION,
       variables: {
         where: { id: labelClassId },
       },
-      refetchQueries: [
-        "getLabelClassesOfDataset",
-        { query: getDatasetsQuery },
-        { query: datasetLabelClassesQuery, variables: { slug: datasetSlug } },
-      ],
+      optimisticResponse: {
+        deleteLabelClass: { __typename: "LabelClass", id: labelClassId },
+      },
+      update: deleteLabelClassMutationUpdate(datasetId),
     });
 
-    useLabellingStore.setState({ selectedLabelClassId: labelClassIdPrevious });
     return {
       labelClassId,
       labelClassIdPrevious,
@@ -150,58 +158,40 @@ export const createCreateLabelClassAndUpdateLabelEffect = (
     labelClassIdPrevious: string;
   }) => {
     await client.mutate({
-      mutation: createLabelClassQuery,
+      mutation: CREATE_LABEL_CLASS_QUERY,
       variables: { data: { name, color, id: labelClassId, datasetId } },
-      refetchQueries: [
-        "getLabelClassesOfDataset",
-        { query: getDatasetsQuery },
-        { query: datasetLabelClassesQuery, variables: { slug: datasetSlug } },
-      ],
+      update: createLabelClassMutationUpdate(datasetId),
+      optimisticResponse: {
+        createLabelClass: {
+          id: labelClassId,
+          name,
+          color,
+          __typename: "LabelClass",
+        },
+      },
     });
+
+    useLabelingStore.setState({ selectedLabelClassId: labelClassId });
 
     await client.mutate({
-      mutation: updateLabelQuery,
+      mutation: UPDATE_LABEL_MUTATION,
       variables: {
         where: { id: selectedLabelId },
-        data: { labelClassId: labelClassId ?? null },
+        data: { labelClassId },
       },
-      refetchQueries: ["getImageLabels"],
+      optimisticResponse: {
+        updateLabel: {
+          id: selectedLabelId,
+          labelClass: { id: labelClassId, __typename: "LabelClass" },
+          __typename: "Label",
+        },
+      },
+      update: updateLabelClassOfLabel(labelClassIdPrevious),
     });
 
-    useLabellingStore.setState({ selectedLabelClassId: labelClassId });
     return {
       labelClassId,
       labelClassIdPrevious,
     };
   },
 });
-
-export const createNewLabelClassAndUpdateLabelCurry =
-  ({
-    labelClasses,
-    datasetId,
-    datasetSlug,
-    perform,
-    onClose = () => {},
-    client,
-  }: {
-    labelClasses: LabelClass[];
-    datasetId: string;
-    datasetSlug: string;
-    perform: any;
-    onClose?: () => void;
-    client: ApolloClient<object>;
-  }) =>
-  async (name: string, selectedLabelId: string | null) => {
-    const newClassColor =
-      labelClasses.length < 1
-        ? hexColorSequence[0]
-        : getNextClassColor(labelClasses[labelClasses.length - 1].color);
-    perform(
-      createCreateLabelClassAndUpdateLabelEffect(
-        { name, color: newClassColor, selectedLabelId, datasetId, datasetSlug },
-        { client }
-      )
-    );
-    onClose();
-  };

@@ -1,32 +1,32 @@
-import React, { useEffect, useState, useRef, useMemo } from "react";
 import {
   Box,
-  Popover,
-  useColorModeValue as mode,
-  PopoverContent,
-  PopoverBody,
-  PopoverTrigger,
-  Kbd,
+  chakra,
   Input,
   InputGroup,
   InputLeftElement,
   InputRightElement,
-  chakra,
+  Kbd,
+  Popover,
+  PopoverBody,
+  PopoverContent,
+  PopoverTrigger,
   Text,
+  useColorModeValue,
 } from "@chakra-ui/react";
+import { useCombobox, UseComboboxStateChange } from "downshift";
+import { isNil } from "lodash/fp";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { IoSearch } from "react-icons/io5";
 import { RiCloseCircleFill } from "react-icons/ri";
-import { useCombobox, UseComboboxStateChange } from "downshift";
-import { useHotkeys } from "react-hotkeys-hook";
-import { LabelClass } from "@labelflow/graphql-types";
+import { useVirtual } from "react-virtual";
+import { GetLabelClassesOfDatasetQuery_dataset_labelClasses } from "../../graphql-types/GetLabelClassesOfDatasetQuery";
+import { useSearchHotkeys } from "../../hooks";
+import { noneClassColor } from "../../theme";
 import { ClassListItem } from "./class-list-item";
-import { noneClassColor } from "../../utils/class-color-generator";
-import { keymap } from "../../keymap";
 
 type CreateClassInput = { name: string; type: string };
 type NoneClass = { name: string; color: string; type: string };
-// The popover doesn't need all the attributes of the label class
-export type LabelClassItem = Omit<LabelClass, "datasetId">;
+export type LabelClassItem = GetLabelClassesOfDatasetQuery_dataset_labelClasses;
 
 const noneClass = {
   name: "None",
@@ -40,11 +40,15 @@ const CloseCircleIcon = chakra(RiCloseCircleFill);
 const filterLabelClasses = ({
   labelClasses,
   inputValueCombobox,
+  includeNoneClass,
 }: {
   labelClasses: LabelClassItem[];
   inputValueCombobox: string;
+  includeNoneClass: boolean;
 }): (LabelClassItem | CreateClassInput | NoneClass)[] => {
-  const labelClassesWithNoneClass = [...labelClasses, noneClass];
+  const labelClassesWithNoneClass = includeNoneClass
+    ? [...labelClasses, noneClass]
+    : labelClasses;
   const createClassItem =
     inputValueCombobox &&
     labelClassesWithNoneClass.filter(
@@ -74,6 +78,7 @@ export const ClassSelectionPopover = ({
   selectedLabelClassId,
   trigger,
   activateShortcuts,
+  includeNoneClass = true,
   ariaLabel = "Class selection popover",
 }: {
   isOpen?: boolean;
@@ -84,6 +89,7 @@ export const ClassSelectionPopover = ({
   selectedLabelClassId?: string | null;
   trigger?: React.ReactNode;
   activateShortcuts?: boolean;
+  includeNoneClass?: boolean;
   ariaLabel?: string;
 }) => {
   const [inputValueCombobox, setInputValueCombobox] = useState<string>("");
@@ -105,9 +111,18 @@ export const ClassSelectionPopover = ({
       filterLabelClasses({
         labelClasses: labelClassesWithShortcut,
         inputValueCombobox,
+        includeNoneClass,
       }),
-    [labelClasses, inputValueCombobox]
+    [labelClasses, inputValueCombobox, includeNoneClass]
   );
+
+  const listRef = useRef<HTMLDivElement | null>(null);
+
+  const rowVirtualizer = useVirtual({
+    size: filteredLabelClasses.length,
+    parentRef: listRef,
+    estimateSize: React.useCallback(() => 32, []),
+  });
 
   const {
     reset,
@@ -158,26 +173,12 @@ export const ClassSelectionPopover = ({
   }, [isOpen]);
 
   const searchInputRef = useRef<HTMLInputElement | null>(null);
-
-  useHotkeys(
-    // "/" key doesn't seem to be recognized on AZERTY keyboards, so we use "*" to catch any input.
-    "*",
-    (keyboardEvent) => {
-      if (
-        // Manually checks if input is bound in keymap
-        keymap.focusLabelClassSearch.key
-          .split(",")
-          .includes(keyboardEvent.key) &&
-        activateShortcuts &&
-        searchInputRef.current != null
-      ) {
-        searchInputRef.current.focus();
-        keyboardEvent.preventDefault();
-      }
-    },
-    {},
-    [activateShortcuts]
+  useSearchHotkeys(
+    () => searchInputRef.current?.focus(),
+    { enabled: isOpen && activateShortcuts && !isNil(searchInputRef.current) },
+    [isOpen, activateShortcuts, searchInputRef.current]
   );
+  const closeCircleIconColor = useColorModeValue("gray.300", "gray.500");
   return (
     <Popover
       isOpen={isOpen}
@@ -187,7 +188,7 @@ export const ClassSelectionPopover = ({
     >
       <PopoverTrigger>{trigger}</PopoverTrigger>
       <PopoverContent
-        borderColor={mode("gray.200", "gray.600")}
+        borderColor={useColorModeValue("gray.200", "gray.600")}
         cursor="default"
         pointerEvents="initial"
         aria-label={ariaLabel}
@@ -231,7 +232,7 @@ export const ClassSelectionPopover = ({
                         fontSize="2xl"
                         onClick={reset}
                         cursor="pointer"
-                        color={mode("gray.300", "gray.500")}
+                        color={closeCircleIconColor}
                       />
                       <Kbd fontSize="md">↩</Kbd>
                     </>
@@ -241,32 +242,46 @@ export const ClassSelectionPopover = ({
                 </InputRightElement>
               </InputGroup>
             </Box>
-            <Box pt="1" {...getMenuProps()} overflowY="scroll" maxHeight="340">
-              {filteredLabelClasses.map(
-                (
-                  item: LabelClassItem | CreateClassInput | NoneClass,
-                  index: number
-                ) => {
+            <Box
+              pt="1"
+              {...getMenuProps({ ref: listRef })}
+              overflowY="scroll"
+              maxHeight="340"
+            >
+              <Box height={rowVirtualizer.totalSize} position="relative">
+                {rowVirtualizer.virtualItems.map(({ index, size, start }) => {
+                  const item = filteredLabelClasses[index];
                   return (
-                    <ClassListItem
-                      itemProps={getItemProps({ item, index })}
-                      item={item}
-                      highlight={highlightedIndex === index}
-                      selected={
-                        ("id" in item && item.id === selectedLabelClassId) ||
-                        (selectedLabelClassId === null &&
-                          "type" in item &&
-                          item.type === "NoneClass")
-                      }
-                      isCreateClassItem={
-                        "type" in item && item.type === "CreateClassItem"
-                      }
-                      index={index}
+                    <Box
                       key={item.name}
-                    />
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: `${size}px`,
+                        transform: `translateY(${start}px)`,
+                      }}
+                    >
+                      <ClassListItem
+                        itemProps={getItemProps({ item, index })}
+                        item={item}
+                        highlight={highlightedIndex === index}
+                        selected={
+                          ("id" in item && item.id === selectedLabelClassId) ||
+                          (selectedLabelClassId === null &&
+                            "type" in item &&
+                            item.type === "NoneClass")
+                        }
+                        isCreateClassItem={
+                          "type" in item && item.type === "CreateClassItem"
+                        }
+                        index={index}
+                      />
+                    </Box>
                   );
-                }
-              )}
+                })}
+              </Box>
             </Box>
           </Box>
         </PopoverBody>

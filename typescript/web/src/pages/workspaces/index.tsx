@@ -1,26 +1,20 @@
-import { Spinner, Center } from "@chakra-ui/react";
-import { useRouter } from "next/router";
-import { useEffect } from "react";
-import { AppLifecycleManager } from "../../components/app-lifecycle-manager";
+import React from "react";
+import { Authenticated } from "../../components/auth";
+import { CookieBanner } from "../../components/cookie-banner";
 import { Layout } from "../../components/layout";
+import { NavLogo } from "../../components/logo/nav-logo";
+import { Meta } from "../../components/meta";
+import { Workspaces } from "../../components/workspaces";
+import { APP_NAME } from "../../constants";
 
-const WorkspacesRedirectPage = () => {
-  const router = useRouter();
+const Page = () => (
+  <Authenticated withWorkspaces>
+    <Meta title={`${APP_NAME} | Workspaces`} />
+    <CookieBanner />
+    <Layout breadcrumbs={[<NavLogo key={0} />]}>
+      <Workspaces />
+    </Layout>
+  </Authenticated>
+);
 
-  useEffect(() => {
-    router.replace({ pathname: `/local/datasets`, query: router.query });
-  }, []);
-
-  return (
-    <>
-      <AppLifecycleManager />
-      <Layout>
-        <Center h="full">
-          <Spinner size="xl" />
-        </Center>
-      </Layout>
-    </>
-  );
-};
-
-export default WorkspacesRedirectPage;
+export default Page;

@@ -1,33 +1,11 @@
-import { ApolloClient, InMemoryCache, HttpLink, concat } from "@apollo/client";
-import { awaitServiceWorkerLink } from "./await-service-worker-link";
+import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client";
+import { APOLLO_CACHE_CONFIG } from "./cache-config";
 
-export const client = new ApolloClient({
-  link: process.env.NEXT_PUBLIC_ENDPOINT
-    ? // Remote endpoint set: use this remote endpoint
-      new HttpLink({ uri: process.env.NEXT_PUBLIC_ENDPOINT })
-    : // No remote endpoint set: use local service worker
-      concat(
-        awaitServiceWorkerLink,
-        new HttpLink({ uri: "/api/worker/graphql" })
-      ),
-  cache: new InMemoryCache({
-    typePolicies: {
-      Label: {
-        fields: {
-          geometry: {
-            // Short for options.mergeObjects(existing, incoming), see https://www.apollographql.com/docs/react/caching/cache-field-behavior/#merging-non-normalized-objects
-            merge: true,
-          },
-        },
-      },
-      Dataset: {
-        fields: {
-          labelClasses: {
-            // Short for keeping only the incoming data, see https://www.apollographql.com/docs/react/caching/cache-field-behavior/#merging-non-normalized-objects
-            merge: false,
-          },
-        },
-      },
-    },
+export const distantDatabaseClient = new ApolloClient({
+  connectToDevTools: true,
+  link: new HttpLink({
+    uri: "/api/graphql",
+    credentials: "same-origin",
   }),
+  cache: new InMemoryCache(APOLLO_CACHE_CONFIG),
 });

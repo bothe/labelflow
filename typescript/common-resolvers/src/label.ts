@@ -1,11 +1,15 @@
 import { v4 as uuidv4 } from "uuid";
 
 import type {
+  Dataset,
   Label,
+  LabelClass,
   MutationCreateLabelArgs,
   MutationDeleteLabelArgs,
   MutationUpdateLabelArgs,
   QueryLabelArgs,
+  LabelWhereInput,
+  MutationDeleteManyLabelsArgs,
 } from "@labelflow/graphql-types";
 import { LabelType } from "@labelflow/graphql-types";
 
@@ -13,55 +17,72 @@ import { DbLabel, Context, Repository } from "./types";
 
 import { throwIfResolvesToNil } from "./utils/throw-if-resolves-to-nil";
 import { getBoundedGeometryFromImage } from "./utils/get-bounded-geometry-from-image";
+import { addTypename } from "./utils";
+
+const LABEL_CLASS_ID_PROPERTY_NAMES: Record<
+  "Dataset" | "LabelClass",
+  keyof LabelWhereInput
+> = {
+  Dataset: "datasetId",
+  LabelClass: "labelClassId",
+};
 
 const getLabelById = async (
   id: string,
-  repository: Repository
+  repository: Repository,
+  user?: { id: string }
 ): Promise<DbLabel> => {
   return await throwIfResolvesToNil(
     "No label with such id",
-    repository.label.getById
-  )(id);
+    repository.label.get
+  )({ id }, user);
 };
 
 // Queries
 const labelClass = async (
   label: DbLabel,
   _args: any,
-  { repository }: Context
+  { repository, user }: Context
 ) => {
   if (!label?.labelClassId) {
     return null;
   }
 
-  return (await repository.labelClass.getById(label.labelClassId)) ?? null;
+  return (
+    (await repository.labelClass.get({ id: label.labelClassId }, user)) ?? null
+  );
 };
 
-const label = async (_: any, args: QueryLabelArgs, { repository }: Context) => {
-  return await getLabelById(args?.where?.id, repository);
+const label = async (
+  _: any,
+  args: QueryLabelArgs,
+  { repository, user }: Context
+) => {
+  return await getLabelById(args?.where?.id, repository, user);
 };
 
 // Mutations
 const createLabel = async (
   _: any,
   args: MutationCreateLabelArgs,
-  { repository }: Context
+  { repository, user }: Context
 ): Promise<Label> => {
-  const { id, imageId, labelClassId, geometry, type } = args.data;
+  const { id, imageId, labelClassId, geometry, type, smartToolInput } =
+    args.data;
 
   // Since we don't have any constraint checks with Dexie
   // We need to ensure that the imageId and the labelClassId
   // matches some entity before being able to continue.
   const image = await throwIfResolvesToNil(
     `The image id ${imageId} doesn't exist.`,
-    repository.image.getById
-  )(imageId);
+    repository.image.get
+  )({ id: imageId }, user);
 
   if (labelClassId != null) {
     await throwIfResolvesToNil(
       `The labelClass id ${labelClassId} doesn't exist.`,
-      repository.labelClass.getById
-    )(labelClassId);
+      repository.labelClass.get
+    )({ id: labelClassId }, user);
   }
 
   const labelId = id ?? uuidv4();
@@ -87,57 +108,71 @@ const createLabel = async (
     width,
     height,
     geometry: clippedGeometry,
+    smartToolInput,
   };
 
-  await repository.label.add(newLabelEntity);
+  await repository.label.add(newLabelEntity, user);
   return await throwIfResolvesToNil(
     "Could not create the label entity",
-    await repository.label.getById
-  )(labelId);
+    await repository.label.get
+  )({ id: labelId }, user);
 };
 
 const deleteLabel = async (
   _: any,
   args: MutationDeleteLabelArgs,
-  { repository }: Context
+  { repository, user }: Context
 ) => {
   const labelId = args.where.id;
 
   const labelToDelete = await throwIfResolvesToNil(
     "No label with such id",
-    repository.label.getById
-  )(labelId);
+    repository.label.get
+  )({ id: labelId }, user);
 
-  await repository.label.delete(labelId);
+  await repository.label.delete({ id: labelId }, user);
 
   return labelToDelete;
+};
+
+const deleteManyLabels = async (
+  _: never,
+  { where }: MutationDeleteManyLabelsArgs,
+  { repository, user }: Context
+) => {
+  const labelsToDelete = await throwIfResolvesToNil(
+    "No labels to delete",
+    repository.label.list
+  )({ ...where, user });
+  await repository.label.deleteMany(where, user);
+  return labelsToDelete;
 };
 
 const updateLabel = async (
   _: any,
   args: MutationUpdateLabelArgs,
-  { repository }: Context
+  { repository, user }: Context
 ) => {
   const labelId = args.where.id;
 
   if ("labelClassId" in args.data && args.data.labelClassId != null) {
     await throwIfResolvesToNil(
       "No label class with such id",
-      repository.labelClass.getById
-    )(args.data.labelClassId);
+      repository.labelClass.get
+    )({ id: args.data.labelClassId }, user);
   }
 
   if (!args?.data?.geometry) {
-    await repository.label.update(labelId, args.data);
+    await repository.label.update({ id: labelId }, args.data, user);
 
-    return await getLabelById(labelId, repository);
+    return await getLabelById(labelId, repository, user);
   }
 
-  const { imageId } = await getLabelById(labelId, repository);
+  const { imageId } = await getLabelById(labelId, repository, user);
   const image = await throwIfResolvesToNil(
     `The image id ${imageId} doesn't exist.`,
-    repository.image.getById
-  )(imageId);
+    repository.image.get
+  )({ id: imageId }, user);
 
   const {
     geometry: clippedGeometry,
@@ -158,25 +193,39 @@ const updateLabel = async (
     width,
   };
 
-  await repository.label.update(labelId, newLabelEntity);
+  await repository.label.update({ id: labelId }, newLabelEntity, user);
 
-  return await getLabelById(labelId, repository);
+  return await getLabelById(labelId, repository, user);
 };
 
-const labelsAggregates = (parent: any) => {
-  // Forward `parent` to chained resolvers if it exists
-  return parent ?? {};
+const labelsAggregates = () => ({});
+
+const labelsAggregatesOfDataset = (parent: Dataset) => {
+  if (!parent) {
+    throw new Error("No parent Dataset");
+  }
+  return addTypename(parent, "Dataset");
 };
 
-const totalCount = async (parent: any, _args: any, { repository }: Context) => {
+const labelsAggregatesOfLabelClass = (parent: LabelClass) => {
+  if (!parent) {
+    throw new Error("No parent LabelClass");
+  }
+  return addTypename(parent, "LabelClass");
+};
+
+const totalCount = async (
+  parent: LabelClass | Dataset | null,
+  _args: any,
+  { repository, user }: Context
+) => {
   // eslint-disable-next-line no-underscore-dangle
   const typename = parent?.__typename;
+  const idProp = typename ? LABEL_CLASS_ID_PROPERTY_NAMES[typename] : undefined;
+  const idWhere: LabelWhereInput | undefined =
+    idProp && parent ? { [idProp]: parent.id } : undefined;
 
-  if (typename === "Dataset") {
-    return await repository.label.count({ datasetId: parent.id });
-  }
-
-  return await repository.label.count();
+  return await repository.label.count({ user, ...idWhere });
 };
 
 export default {
@@ -187,11 +236,13 @@ export default {
   Mutation: {
     createLabel,
     deleteLabel,
+    deleteManyLabels,
     updateLabel,
   },
   Label: {
     labelClass,
   },
+  LabelClass: { labelsAggregates: labelsAggregatesOfLabelClass },
   LabelsAggregates: { totalCount },
-  Dataset: { labelsAggregates },
+  Dataset: { labelsAggregates: labelsAggregatesOfDataset },
 };
